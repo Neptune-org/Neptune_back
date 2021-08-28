@@ -1,0 +1,58 @@
+<html>
+<body>
+<h2>  List Delivery man :  </h2>
+
+<a href="/deliveryman/adddelivery"> Add Delivery man </a>
+
+<table border="2">
+
+	<tr>
+		<td>ID</td>
+		<td>Full Name</td>
+		<td>username</td>
+		<td>email</td>
+		<td>password</td>
+		<td>gender</td>
+		<td>licence</td>
+		<td>date</td>
+		<td>Phone </td>
+		<td>Status </td>
+		<td>region </td>
+		<td>image </td>
+
+		<td>Action</td>
+	</tr>
+<% if(users.length > 0) {  %>
+<% for(var i=0 ; i< users.length ; i++) {    %>
+<tr>
+		<td><%= users[i]._id   %></td>
+		<td><%= users[i].FullName   %></td>
+		<td><%= users[i].Username   %></td>
+		<td><%= users[i].Email   %></td>
+		<td><%= users[i].Password   %></td>
+		<td><%= users[i].Gender   %></td>
+		<td><%= users[i].Licence   %></td>
+		<td><%= users[i].Date_birth   %></td>
+		<td><%= users[i].Phone   %> </td>
+		<td><%= users[i].Status   %> </td>
+		<td><%= users[i].Region   %> </td>
+		
+		<td><img src="/public/uploads/<%=users[i].img%>" width="200px"></td>
+
+		
+		<td>
+			<a href="/deliveryman/edit/delivery/<%= users[i]._id   %>">Edit</a>
+			<a href="/deliveryman/delete/<%= users[i]._id   %>">Remove</a>
+			<a href="/deliveryman/<%= users[i]._id   %>">Show</a>
+		</td>
+</tr>
+<%   }  %>
+<%   }else{  %>
+<h3> No delivery man found !!! </3>
+<%   }  %>
+</table>
+
+</body>
+
+
+</html>

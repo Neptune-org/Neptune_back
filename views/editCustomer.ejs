@@ -1,0 +1,96 @@
+<html>
+
+<body>
+<form action="/customers/edit/<%= user._id %>" method="post">
+<table>
+
+    <tr>
+		<td>CIN</td>
+		<td>:</td>
+		<td> <input type="text" name="cin" value="<%= user.Cin %>" ></td>
+	</tr>
+
+	<tr>
+		<td>First Name</td>
+		<td>:</td>
+		<td> <input type="text" name="firstname" value="<%= user.FirstName %>" ></td>
+	</tr>	
+
+	<tr>
+		<td>Last Name</td>
+		<td>:</td>
+		<td> <input type="text" name="lastname" value="<%= user.LastName %>" ></td>
+	</tr>
+
+	<tr>
+		<td>Username</td>
+		<td>:</td>
+		<td> <input type="text" name="username" value="<%= user.UserName %>" ></td>
+	</tr>
+
+
+	<tr>
+		<td>Password</td>
+		<td>:</td>
+		<td> <input type="password" name="password" value="<%= user.Password %>" ></td>
+	</tr>
+
+	<tr>
+		<td>Email</td>
+		<td>:</td>
+		<td> <input type="text" name="email" value="<%= user.Email %>" ></td>
+	</tr>
+
+
+	<tr>
+		<td>Phone Number</td>
+		<td>:</td>
+		<td> <input type="text" name="phonenumber" value="<%= user.PhoneNumber %>" ></td>
+	</tr>
+
+	<tr>
+		<td>* Address *</td>
+		<td>:</td>
+
+	</tr>
+
+
+	<tr>
+		<td>Street</td>
+		<td>:</td>
+		<td> <input type="text" name="street" value="<%= user.Adress.Street %>" ></td>
+	</tr>
+
+	<tr>
+		<td>City</td>
+		<td>:</td>
+		<td> <input type="text" name="city" value="<%= user.Adress.City %>" ></td>
+	</tr>
+
+	<tr>
+		<td>State</td>
+		<td>:</td>
+		<td> <input type="text" name="state" value="<%= user.Adress.State %>" ></td>
+	</tr>
+
+	<tr>
+		<td>ZipCode</td>
+		<td>:</td>
+		<td> <input type="number" name="zipCode" value="<%= user.Adress.ZipCode %>" ></td>
+	</tr>
+
+
+	<tr>
+		<td>
+			<input type="submit" name="btn" value="Edit">
+			<input type="reset" name="btn" value="Reset">
+		</td>
+	</tr>
+
+
+</table>
+</form>
+</body>
+
+
+</html>

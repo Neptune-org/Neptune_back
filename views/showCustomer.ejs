@@ -1,0 +1,52 @@
+<html>
+<body>
+<h2>  Customers List :  </h2>
+
+<a href="/customers/addCustomer"> Add Customer </a>
+
+<table border="2">
+
+	<tr>
+		<td>ID</td>
+		<td>CIN</td>
+		<td>First Name</td>
+		<td>Last Name </td>
+		<td>Username </td>
+		<td>Password </td>
+		<td>Email </td>
+		<td>Phone number</td>
+		<td>Address</td>
+		<td>Payment</td>
+		<td>Image</td>
+	</tr>
+<% if(users.length > 0) {  %>
+<% for(var i=0 ; i< users.length ; i++) {    %>
+<tr>
+		<td><%= users[i]._id   %></td>
+		<td><%= users[i].Cin   %></td>
+		<td><%= users[i].FirstName   %></td>
+		<td><%= users[i].LastName   %> </td>
+		<td><%= users[i].UserName   %> </td>
+		<td><%= users[i].Password   %> </td>
+		<td><%= users[i].Email   %> </td>
+		<td><%= users[i].PhoneNumber   %> </td>
+		<td><%= users[i].Adress   %> </td>
+		<td><%= users[i].payments   %> </td>
+	<td><img src="/public/uploads/<%=users[i].img%>" width="200px"></td>
+
+	<td>
+			<a href="/customers/edit/customer/<%= users[i]._id   %>">Edit</a>
+			<a href="/customers/delete/<%= users[i]._id   %>">Remove</a>
+			<a href="/customers/Details/<%= users[i]._id   %>">Show</a>
+		</td>
+</tr>
+<%   }  %>
+<%   }else{  %>
+<h3> No Customers man found !!! </h3>
+<%   }  %>
+</table>
+
+</body>
+
+
+</html>
