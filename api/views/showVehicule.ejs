@@ -1,0 +1,35 @@
+<html>
+  <body>
+    <h2>List vehicules :</h2>
+
+    <a href="/vehicule/addvehicule"> Add a new vehicule </a>
+
+    <table border="2">
+      <tr>
+        <td>ID</td>
+        <td>Registration Number</td>
+        <td>Model</td>
+        <td>Weight Capacity</td>
+        <td>Trunk Volume</td>
+      </tr>
+      <% if(vehicules.length > 0) { %> <% for(var i=0 ; i< vehicules.length ;
+      i++) { %>
+      <tr>
+        <td><%= vehicules[i]._id %></td>
+        <td><%= vehicules[i].registrationNumber %></td>
+        <td><%= vehicules[i].model %></td>
+        <td><%= vehicules[i].weightCapacity %></td>
+        <td><%= vehicules[i].trunkVolume %></td>
+
+        <td>
+          <a href="/vehicule/edit/vehicule/<%= vehicules[i]._id%>">Edit</a>
+          <a href="/vehicule/delete/<%= vehicules[i]._id%>">Remove</a>
+          <!-- <a href="/vehicule/<%= vehicules[i]._id%>">Show</a>-->
+        </td>
+      </tr>
+      <% } %> <% }else{ %>
+      <h3>Vehicles table empty!</h3>
+      <% } %>
+    </table>
+  </body>
+</html>

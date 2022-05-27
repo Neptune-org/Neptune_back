@@ -1,0 +1,35 @@
+<html>
+
+<body>
+<form action="/deliveryman/edit/<%= user._id %>" method="post">
+<table>
+
+	<tr>
+		<td>ID</td>
+		<td>:</td>
+		<td> <input type="text" name="id" value="<%= user._id %>" disabled></td>
+	</tr>
+	<tr>
+		<td>Full Name</td>
+		<td>:</td>
+		<td> <input type="text" name="FullName" value="<%= user.FullName %>" ></td>
+	</tr>
+	<tr>
+		<td>Phone</td>
+		<td>:</td>
+		<td> <input type="text" name="Phone" value="<%= user.Phone %>" ></td>
+	</tr>
+	<tr>
+		<td>
+			<input type="submit" name="btn" value="Edit">
+			<input type="reset" name="btn" value="Reset">
+		</td>
+	</tr>
+
+
+</table>
+</form>
+</body>
+
+
+</html>
