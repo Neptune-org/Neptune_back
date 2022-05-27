@@ -1,5 +1,0 @@
-{
-	"mongo":{
-		"uri":"mongodb+srv://fish_db:<password>@cluster0.2pxww.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
-	}
-}
