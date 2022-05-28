@@ -52,7 +52,7 @@ router.get("/getsupers", async (req, res) => {
 
 router.get("/getstaff/:id", async (req, res) => {
   try {
-    const allUsers = await User.find({ role: "gstaff" , graveyard:req.params.id });
+    const allUsers = await User.find({ $or: [{ role: "gstaff"},{ role: "gadmin"},{ role: "gcompta"}] , graveyard:req.params.id });
     res.json(allUsers);
   } catch (err) {
     console.log(err);
@@ -263,8 +263,13 @@ router.post("/addadmin", upload.single("userimage"), async (req, res) => {
       userimage: req.file?.filename,
       graveyard: d._id,
       phone: req.body.phone,
+      vendor:req.body.vendor
     });
   });
+  const addingclient =  await User.findByIdAndUpdate(req.body.vendor, { $push: {clients: registreduser._id} }, {
+    new: true,
+  });
+
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -361,6 +366,7 @@ router.post("/addclient", upload.single("userimage"), async (req, res) => {
     userimage: req.file?.filename,
     graveyard: req.body.graveyard,
     profiles: wow,
+    vendor : req.body.vendor
   });
   const addingprof =  await User.findByIdAndUpdate(req.body.vendor, { $push: { profiles: wow } }, {
     new: true,
@@ -437,7 +443,7 @@ router.post("/addgstaff", upload.single("userimage"), async (req, res) => {
   //console.log(req.body);
   let rand = (Math.random() + 1).toString(36).substring(4);
 
-  const hashedpassword = await bcrypt.hash(rand, 10);
+  const hashedpassword = await bcrypt.hash(rand, 7);
   const myuser = req.body;
   myuser.password = hashedpassword;
 
@@ -456,8 +462,8 @@ router.post("/addgstaff", upload.single("userimage"), async (req, res) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: "info.skiesbook@gmail.com",
-      pass: "Napoleon414@",
+      user: "mohamedaziz.sahnoun@esprit.tn",
+      pass: "thebigredone5",
     },
   });
   const template = fs.readFileSync(
@@ -475,7 +481,61 @@ router.post("/addgstaff", upload.single("userimage"), async (req, res) => {
   });
 
   let info = await transporter.sendMail({
-    from: "info.skiesbook@gmail.com",
+    from: "mohamedaziz.sahnoun@esprit.tn",
+    to: req.body.email,
+    subject: "Skiesbook",
+    html: html,
+  });
+  res.json(registreduser);
+});
+
+router.post("/addastaff", upload.single("userimage"), async (req, res) => {
+  const usercheck = await User.findOne({ email: req.body.email });
+  if (usercheck !== null) {
+    return res.status(401).json({ message: "EMAIL_EXISTS" });
+  }
+  const pass = req.body.password;
+  //console.log(req.body);
+  let rand = (Math.random() + 1).toString(36).substring(4);
+
+  const hashedpassword = await bcrypt.hash(rand, 7);
+  const myuser = req.body;
+  myuser.password = hashedpassword;
+
+  const registreduser = await User.create({
+    name: req.body.name,
+    lastn: req.body.lastn,
+    Datebirth: req.body.Datebirth,
+    email: req.body.email,
+    password: req.body.password,
+    sex: req.body.sex,
+    role: req.body.role,
+    userimage: req.file?.filename,
+    phone: req.body.phone,
+  });
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "mohamedaziz.sahnoun@esprit.tn",
+      pass: "thebigredone5",
+    },
+  });
+  const template = fs.readFileSync(
+    path.resolve("./api/views", "sendgstaff.html"),
+    {
+      encoding: "utf-8",
+    }
+  );
+  const html = ejs.render(template, {
+    name: req.body.name,
+    lastname: req.body.lastn,
+    password: rand,
+    email: req.body.email,
+    grave: req.body.gname,
+  });
+
+  let info = await transporter.sendMail({
+    from: "mohamedaziz.sahnoun@esprit.tn",
     to: req.body.email,
     subject: "Skiesbook",
     html: html,
