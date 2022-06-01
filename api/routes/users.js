@@ -1,11 +1,11 @@
-var express = require("express");
-var router = express.Router();
-var User = require("../models/Users");
-var Graveyard = require("../models/Graveyard");
-var Profile = require("../models/Profile");
+const express = require("express");
+const router = express.Router();
+const User = require("../models/Users");
+const Graveyard = require("../models/Graveyard");
+const Profile = require("../models/Profile");
 const ejs = require("ejs");
 const passport = require("passport");
-var bcrypt = require("bcrypt");
+const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 const multer = require("multer");
 const path = require("path");
@@ -53,6 +53,16 @@ router.get("/getsupers", async (req, res) => {
 router.get("/getstaff/:id", async (req, res) => {
   try {
     const allUsers = await User.find({ $or: [{ role: "gstaff"},{ role: "gadmin"},{ role: "gcompta"}] , graveyard:req.params.id });
+    res.json(allUsers);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+
+router.get("/getastaff", async (req, res) => {
+  try {
+    const allUsers = await User.find({ $or: [{ role: "sales"},{ role: "sadmin"},{ role: "help"}]});
     res.json(allUsers);
   } catch (err) {
     console.log(err);
@@ -216,6 +226,10 @@ router.post("/addsuperadmin", upload.single("userimage"), async (req, res) => {
   const myuser = req.body;
   console.log(req.body);
   myuser.password = hashedpassword;
+  let myfile = "avatar.jpg"
+    if (req.file){
+      myfile = req?.file.filename;
+    }
   const newuser = {
     name: req.body.name,
     lastn: req.body.lastn,
@@ -224,7 +238,7 @@ router.post("/addsuperadmin", upload.single("userimage"), async (req, res) => {
     password: req.body.password,
     sex: req.body.sex,
     role: "superadmin",
-    userimage: req.file?.filename,
+    userimage: myfile,
     phone: req.body.phone,
   };
   const registreduser = await User.create(newuser);
@@ -252,6 +266,10 @@ router.post("/addadmin", upload.single("userimage"), async (req, res) => {
     Lat: req.body.latitude,
   };
   const registreduser = await Graveyard.create(mygraveyard).then((d) => {
+    let myfile = "avatar.jpg"
+    if (req.file){
+      myfile = req?.file.filename;
+    }
     User.create({
       name: req.body.name,
       lastn: req.body.lastn,
@@ -260,21 +278,22 @@ router.post("/addadmin", upload.single("userimage"), async (req, res) => {
       password: req.body.password,
       sex: req.body.sex,
       role: req.body.role,
-      userimage: req.file?.filename,
+      userimage: myfile,
       graveyard: d._id,
       phone: req.body.phone,
-      vendor:req.body.vendor
+      sub: req.body.sub ,
+      vendor: req.body.vendor
+    }).then((k)=> {
+      User.findByIdAndUpdate(req.body.vendor, { $push: {clients: k._id} }, {
+        new: true,
+      })
     });
   });
-  const addingclient =  await User.findByIdAndUpdate(req.body.vendor, { $push: {clients: registreduser._id} }, {
-    new: true,
-  });
-
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: "info.skiesbook@gmail.com",
-      pass: "Napoleon414@",
+      user: process.env.EMAIL,
+      pass: process.env.PASS,
     },
   });
   const template = fs.readFileSync(
@@ -292,7 +311,7 @@ router.post("/addadmin", upload.single("userimage"), async (req, res) => {
   });
 
   let info = await transporter.sendMail({
-    from: "info.skiesbook@gmail.com",
+    from: "mohamedaziz.sahnoun@esprit..tn",
     to: req.body.email,
     subject: "Skiesbook",
     html: html,
@@ -352,6 +371,10 @@ router.post("/addclient", upload.single("userimage"), async (req, res) => {
       wow.push(i._id);
     });
   });
+  let myfile = "avatar.jpg"
+    if (req.file){
+      myfile = req?.file.filename;
+    }
   const registreduser = await User.create({
     name: req.body.name,
     lastn: req.body.lastn,
@@ -363,7 +386,7 @@ router.post("/addclient", upload.single("userimage"), async (req, res) => {
     phone: req.body.phone,
     sex: req.body.sex,
     role: req.body.role,
-    userimage: req.file?.filename,
+    userimage: myfile,
     graveyard: req.body.graveyard,
     profiles: wow,
     vendor : req.body.vendor
@@ -386,8 +409,8 @@ router.post("/resetpassword", async (req, res) => {
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
-          user: "info.skiesbook@gmail.com",
-          pass: "Napoleon414@",
+          user: "mohamedaziz.sahnoun@esprit..tn",
+          pass: process.env.PASS,
         },
       });
       const template = fs.readFileSync(
@@ -404,7 +427,7 @@ router.post("/resetpassword", async (req, res) => {
       });
 
       let info = await transporter.sendMail({
-        from: "info.skiesbook@gmail.com",
+        from: "mohamedaziz.sahnoun@esprit..tn",
         to: req.body.email,
         subject: "Skiesbook Reset Password",
         html: html,
@@ -446,7 +469,10 @@ router.post("/addgstaff", upload.single("userimage"), async (req, res) => {
   const hashedpassword = await bcrypt.hash(rand, 7);
   const myuser = req.body;
   myuser.password = hashedpassword;
-
+  let myfile = "avatar.jpg"
+  if (req.file){
+    myfile = req?.file.filename;
+  }
   const registreduser = await User.create({
     name: req.body.name,
     lastn: req.body.lastn,
@@ -455,15 +481,15 @@ router.post("/addgstaff", upload.single("userimage"), async (req, res) => {
     password: req.body.password,
     sex: req.body.sex,
     role: req.body.role,
-    userimage: req.file?.filename,
+    userimage: myfile,
     graveyard: req.body.grave,
     phone: req.body.phone,
   });
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: "mohamedaziz.sahnoun@esprit.tn",
-      pass: "thebigredone5",
+      user: process.env.EMAIL,
+      pass: process.env.PASS,
     },
   });
   const template = fs.readFileSync(
@@ -481,7 +507,7 @@ router.post("/addgstaff", upload.single("userimage"), async (req, res) => {
   });
 
   let info = await transporter.sendMail({
-    from: "mohamedaziz.sahnoun@esprit.tn",
+    from: process.env.EMAIL,
     to: req.body.email,
     subject: "Skiesbook",
     html: html,
@@ -494,14 +520,16 @@ router.post("/addastaff", upload.single("userimage"), async (req, res) => {
   if (usercheck !== null) {
     return res.status(401).json({ message: "EMAIL_EXISTS" });
   }
-  const pass = req.body.password;
   //console.log(req.body);
   let rand = (Math.random() + 1).toString(36).substring(4);
 
   const hashedpassword = await bcrypt.hash(rand, 7);
   const myuser = req.body;
   myuser.password = hashedpassword;
-
+  let myfile = "avatar.jpg"
+  if (req.file){
+    myfile = req?.file.filename;
+  }
   const registreduser = await User.create({
     name: req.body.name,
     lastn: req.body.lastn,
@@ -510,14 +538,14 @@ router.post("/addastaff", upload.single("userimage"), async (req, res) => {
     password: req.body.password,
     sex: req.body.sex,
     role: req.body.role,
-    userimage: req.file?.filename,
+    userimage: myfile,
     phone: req.body.phone,
   });
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: "mohamedaziz.sahnoun@esprit.tn",
-      pass: "thebigredone5",
+      user: process.env.EMAIL,
+      pass: process.env.PASS,
     },
   });
   const template = fs.readFileSync(
@@ -535,7 +563,7 @@ router.post("/addastaff", upload.single("userimage"), async (req, res) => {
   });
 
   let info = await transporter.sendMail({
-    from: "mohamedaziz.sahnoun@esprit.tn",
+    from: process.env.EMAIL,
     to: req.body.email,
     subject: "Skiesbook",
     html: html,

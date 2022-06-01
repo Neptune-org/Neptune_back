@@ -1,9 +1,9 @@
-var express = require("express");
-var router = express.Router();
-var Graveyard = require("../models/Graveyard");
+const express = require("express");
+const router = express.Router();
+const Graveyard = require("../models/Graveyard");
 const passport = require("passport");
-var bcrypt = require("bcrypt");
-
+const bcrypt = require("bcrypt");
+const Prices = require("../models/Price");
 const multer = require("multer");
 const path = require("path");
 
@@ -18,6 +18,24 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/prices", async (req, res) => {
+  try {
+    const prices = await Prices.find();
+    res.json(prices);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+router.post("/prices", async (req, res) => {
+  try {
+    const prices = await Prices.create(req.body);
+    res.json(prices);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
 // delete todo to user
 
 // Get User by ID

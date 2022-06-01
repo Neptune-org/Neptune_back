@@ -1,7 +1,7 @@
-var mongoose = require("mongoose");
-var Schema = mongoose.Schema;
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
-var Graveyard = new Schema(
+const Graveyard = new Schema(
   {
     name: String,
     funeral_home:String, 
@@ -14,7 +14,7 @@ var Graveyard = new Schema(
     users: [{ type: Schema.Types.ObjectId, ref: "Users" }],
     persons: [{ type: Schema.Types.ObjectId, ref: "Profile" }],
     staff: [{ type: Schema.Types.ObjectId, ref: "Users" }],
-
+    sub : { type: Schema.Types.ObjectId, ref: "Price" },
     
   },
   { timestamps: true, versionKey: false }

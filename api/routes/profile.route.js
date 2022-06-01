@@ -1,10 +1,10 @@
-var express = require("express");
-var router = express.Router();
-var Profile = require("../models/Profile");
+const express = require("express");
+const router = express.Router();
+const Profile = require("../models/Profile");
 const passport = require("passport");
-var bcrypt = require("bcrypt");
-var User = require("../models/Users");
-
+const bcrypt = require("bcrypt");
+const User = require("../models/Users");
+const Ticket = require("../models/tickets");
 const multer = require("multer");
 const path = require("path");
 
@@ -18,9 +18,14 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/ahmed", async (req, res) => {
-  res.status(200).send("hello");
-});
+router.get("/alltickets", async (req, res) => {
+  try {
+    const tickets = await Ticket.find({}).populate("prop");
+    res.json(tickets);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }});
 
 // delete todo to profile
 
@@ -35,11 +40,62 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-//Add Profile
 
 //Register
+router.get("/mytickets/:id", async (req, res) => {
+  try {
+    const tickets = await Ticket.find({prop : req.params.id});
+    res.json(tickets);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
 
-//Delete Profile
+router.get("/getticket/:id", async (req, res) => {
+  try {
+    const ticket = await Ticket.findById(req.params.id).populate({
+      path : 'messages',
+      populate : {
+        path : 'sender'
+      }
+    });;
+    res.json(ticket);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+//add ticket
+router.post("/addticket/:id", async (req, res) => {
+  try {
+    let tick = {
+      prop: req.params.id,
+      subject : req.body.subject,
+      messages : {msg:req.body.message,send:0,sender:req.params.id},
+    }
+    const tickets = await Ticket.create(tick)
+    res.json(tickets);
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+
+router.put("/sendmessage/:id", async (req, res) => {
+  try {
+    let tick = {
+      messages : {msg:req.body.message,send:req.body.side,sender:req.body.sender},
+    }
+    const ticket = await Ticket.findByIdAndUpdate(req.params.id,{$push : {messages : tick.messages}},{new : true});
+    res.json(ticket);
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
 
 router.put("/:id", async (req, res) => {
   const updateProfile = await Profile.findByIdAndUpdate(
