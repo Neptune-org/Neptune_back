@@ -25,14 +25,67 @@ router.get("/alltickets", async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "internal server err" });
-  }});
+  }
+});
 
+router.post("/searchbyname", async (req, res) => {
+  try {
+    const myprofile = await Profile.findOne({ _id: req.body.myid });
+    const name = req.body.fullname.split(" ").slice(0, -1).join(" ");
+    const lastname = req.body.fullname.split(" ").slice(-1).join(" ");
+    console.log(name, lastname);
+    const profiles = await Profile.find({
+      $and: [
+        { profileLastName: { $regex: ".*" + lastname + ".*" } },
+        { profileName: { $regex: ".*" + name + ".*" } },
+      ],
+    });
+    const ids = myprofile.invitationsout.map((profile) => profile.prof);
+    const idsf = myprofile.friends.map((profile) => profile.prof);
+    const filtredProfiles = profiles.filter((profile) => {
+      return !ids.includes(profile._id) && !idsf.includes(profile._id);
+    });
+    res.json(filtredProfiles);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+router.post("/searchbyid", async (req, res) => {
+  try {
+    const myprofile = await Profile.findOne({ _id: req.body.myid })
+      .populate({
+        path: "friends",
+        populate: {
+          path: "prof",
+        },
+      })
+      .populate({
+        path: "invitationsout",
+        populate: {
+          path: "prof",
+        },
+      });
+
+    const profiles = await Profile.findById(req.body.id);
+
+    res.json([profiles]);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
 // delete todo to profile
 
 // Get Profile by ID
 router.get("/:id", async (req, res) => {
   try {
-    const profile = await Profile.findById(req.params.id);
+    const profile = await Profile.findById(req.params.id).populate({
+      path: "friends",
+      populate: {
+        path: "prof",
+      },
+    });
     res.json(profile);
   } catch (err) {
     console.log(err);
@@ -40,11 +93,10 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-
 //Register
 router.get("/mytickets/:id", async (req, res) => {
   try {
-    const tickets = await Ticket.find({prop : req.params.id});
+    const tickets = await Ticket.find({ prop: req.params.id });
     res.json(tickets);
   } catch (err) {
     console.log(err);
@@ -55,11 +107,11 @@ router.get("/mytickets/:id", async (req, res) => {
 router.get("/getticket/:id", async (req, res) => {
   try {
     const ticket = await Ticket.findById(req.params.id).populate({
-      path : 'messages',
-      populate : {
-        path : 'sender'
-      }
-    });;
+      path: "messages",
+      populate: {
+        path: "sender",
+      },
+    });
     res.json(ticket);
   } catch (err) {
     console.log(err);
@@ -71,12 +123,11 @@ router.post("/addticket/:id", async (req, res) => {
   try {
     let tick = {
       prop: req.params.id,
-      subject : req.body.subject,
-      messages : {msg:req.body.message,send:0,sender:req.params.id},
-    }
-    const tickets = await Ticket.create(tick)
+      subject: req.body.subject,
+      messages: { msg: req.body.message, send: 0, sender: req.params.id },
+    };
+    const tickets = await Ticket.create(tick);
     res.json(tickets);
-
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "internal server err" });
@@ -86,11 +137,18 @@ router.post("/addticket/:id", async (req, res) => {
 router.put("/sendmessage/:id", async (req, res) => {
   try {
     let tick = {
-      messages : {msg:req.body.message,send:req.body.side,sender:req.body.sender},
-    }
-    const ticket = await Ticket.findByIdAndUpdate(req.params.id,{$push : {messages : tick.messages}},{new : true});
+      messages: {
+        msg: req.body.message,
+        send: req.body.side,
+        sender: req.body.sender,
+      },
+    };
+    const ticket = await Ticket.findByIdAndUpdate(
+      req.params.id,
+      { $push: { messages: tick.messages } },
+      { new: true }
+    );
     res.json(ticket);
-
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "internal server err" });
@@ -212,10 +270,10 @@ router.get("/staffgetprofiles/:id", async (req, res) => {
 router.get("/staffgetclients/:id", async (req, res) => {
   try {
     const clients = await User.findById(req.params.id).populate({
-      path : 'clients',
-      populate : {
-        path : 'profiles'
-      }
+      path: "clients",
+      populate: {
+        path: "profiles",
+      },
     });
     res.json(clients);
   } catch (err) {
@@ -247,8 +305,8 @@ router.put(
       const oldprof = await Profile.findById(req.params.id);
       const profile = {
         files: oldprof.files,
-      } ;
-      if(req.body.bio){
+      };
+      if (req.body.bio) {
         profile.bio = req.body.bio;
       }
       if (req.files.profileimage) {
@@ -257,7 +315,7 @@ router.put(
       if (req.files.banner) {
         profile.banner = req.files?.banner[0]?.filename;
       }
-      if(req.files.files){
+      if (req.files.files) {
         profile.files = [...profile.files, ...allfiles];
       }
       const updatedProfile = await Profile.findByIdAndUpdate(
@@ -274,5 +332,172 @@ router.put(
       res.status(500).json({ message: "internal server err" });
     }
   }
+);
+
+router.post("/sendinvitation", async (req, res) => {
+  try {
+    const id = req.body.id;
+    const parent = {
+      prof: req.body.reciever,
+      lien: req.body.link,
+    };
+    
+    const forReciver = {
+      prof: req.body.id,
+      lien: req.body.link,
+    };
+    const profile = await Profile.findByIdAndUpdate(
+      id,
+      { $push: { invitationsout: parent } },
+      { new: true }
+    );
+    const reciever = await Profile.findByIdAndUpdate(
+      req.body.reciever,
+      { $push: { invitationsin: forReciver } },
+      { new: true }
+    );
+
+    res.json(profile);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+
+router.get("/prof/:id", async (req, res) => {
+  try {
+    const profile = await Profile.findById(req.params.id)
+      .populate({
+        path: "invitationsout",
+        populate: {
+          path: "prof",
+        },
+      })
+      .populate({
+        path: "friends",
+        populate: {
+          path: "prof",
+        },
+      })
+      .populate({
+        path: "invitationsin",
+        populate: {
+          path: "prof",
+        },
+      });
+    res.json(profile);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+
+router.post("/accept", async (req, res) => {
+  try {
+    const friend = {
+      prof: req.body.ids,
+      lien: req.body.lien,
+    };
+    const friend2 = {
+      prof: req.body.id,
+      lien: req.body.lien2,
+    };
+    const profile = await Profile.findOneAndUpdate(
+      { _id: req.body.id },
+      {
+        $pull: {
+          invitationsin: { prof: req.body.ids },
+        },
+      },
+      { new: true }
+
+    );
+    const adding  = await Profile.findOneAndUpdate(
+      { _id: req.body.id },
+      {
+        $push: {
+          friends: friend,
+        },
+      },
+      { new: true }
+
+    );
+    const adding2  = await Profile.findOneAndUpdate(
+      { _id: req.body.ids },
+      {
+        $push: {
+          friends: friend2,
+        },
+      },
+      { new: true }
+
+    );
+    console.log(req.body);
+    const profile2 = await Profile.findOneAndUpdate(
+      { _id: req.body.ids },
+      {
+        $pull: {
+          invitationsout: { prof: req.body.id },
+        },
+      },
+      { new: true }
+    );
+      if(profile2){
+        return res.status(200).json(profile);
+      }
+    return res.status(200).json(profile);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+
+router.get("/getallinv/:id", async (req, res) => {
+  try {
+    const profile = await User.findById(req.params.id)
+      .populate({
+        path: "profiles",
+        populate: {
+          path: "invitationsout.prof",
+        },
+      })
+      .populate({
+        path: "profiles",
+        populate: {
+          path: "invitationsin.prof",
+        },
+      })
+      .populate({
+        path: "profiles",
+        populate: {
+          path: "friends.prof",
+        },
+      });
+    res.json(profile);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+// change ticket status
+router.put("/changestatus/:id", async (req, res) => {
+  try {
+    console.log(req.body.status)
+    const Tickets = await Ticket.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: {
+          status: req.body.status,
+        },
+      },
+      { new: true }
+    );
+    console.log(Tickets);
+    res.json(Tickets);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+}
 );
 module.exports = router;

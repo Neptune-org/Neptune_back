@@ -19,6 +19,9 @@ const Profile = new Schema(
     banner: String,
     profileImage:String,
     bio: String,
+    friends: [{ lien: String, prof: { type: Schema.Types.ObjectId, ref: "Profile" } }],
+    invitationsout: [{ lien: String, prof: { type: Schema.Types.ObjectId, ref: "Profile" } }],
+    invitationsin: [{ lien: String, prof: { type: Schema.Types.ObjectId, ref: "Profile" } }],
     cords: String, // Funérailles cords
     modeDeath: String, //  Modes de funérailles
     profileEmail: String,

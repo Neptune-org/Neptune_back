@@ -14,7 +14,6 @@ const Graveyard = new Schema(
     users: [{ type: Schema.Types.ObjectId, ref: "Users" }],
     persons: [{ type: Schema.Types.ObjectId, ref: "Profile" }],
     staff: [{ type: Schema.Types.ObjectId, ref: "Users" }],
-    sub : { type: Schema.Types.ObjectId, ref: "Price" },
     
   },
   { timestamps: true, versionKey: false }

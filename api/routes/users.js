@@ -515,6 +515,10 @@ router.post("/addgstaff", upload.single("userimage"), async (req, res) => {
   res.json(registreduser);
 });
 
+
+
+
+
 router.post("/addastaff", upload.single("userimage"), async (req, res) => {
   const usercheck = await User.findOne({ email: req.body.email });
   if (usercheck !== null) {
