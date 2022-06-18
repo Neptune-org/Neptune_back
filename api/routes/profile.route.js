@@ -7,6 +7,8 @@ const User = require("../models/Users");
 const Ticket = require("../models/tickets");
 const multer = require("multer");
 const path = require("path");
+const mongoose = require("mongoose");
+
 
 router.get("/", async (req, res) => {
   try {
@@ -33,7 +35,6 @@ router.post("/searchbyname", async (req, res) => {
     const myprofile = await Profile.findOne({ _id: req.body.myid });
     const name = req.body.fullname.split(" ").slice(0, -1).join(" ");
     const lastname = req.body.fullname.split(" ").slice(-1).join(" ");
-    console.log(name, lastname);
     const profiles = await Profile.find({
       $and: [
         { profileLastName: { $regex: ".*" + lastname + ".*" } },
@@ -92,6 +93,8 @@ router.get("/:id", async (req, res) => {
     res.status(500).json({ message: "internal server err" });
   }
 });
+
+
 
 //Register
 router.get("/mytickets/:id", async (req, res) => {
@@ -341,7 +344,7 @@ router.post("/sendinvitation", async (req, res) => {
       prof: req.body.reciever,
       lien: req.body.link,
     };
-    
+
     const forReciver = {
       prof: req.body.id,
       lien: req.body.link,
@@ -410,9 +413,8 @@ router.post("/accept", async (req, res) => {
         },
       },
       { new: true }
-
     );
-    const adding  = await Profile.findOneAndUpdate(
+    const adding = await Profile.findOneAndUpdate(
       { _id: req.body.id },
       {
         $push: {
@@ -420,9 +422,8 @@ router.post("/accept", async (req, res) => {
         },
       },
       { new: true }
-
     );
-    const adding2  = await Profile.findOneAndUpdate(
+    const adding2 = await Profile.findOneAndUpdate(
       { _id: req.body.ids },
       {
         $push: {
@@ -430,9 +431,7 @@ router.post("/accept", async (req, res) => {
         },
       },
       { new: true }
-
     );
-    console.log(req.body);
     const profile2 = await Profile.findOneAndUpdate(
       { _id: req.body.ids },
       {
@@ -442,9 +441,9 @@ router.post("/accept", async (req, res) => {
       },
       { new: true }
     );
-      if(profile2){
-        return res.status(200).json(profile);
-      }
+    if (profile2) {
+      return res.status(200).json(profile);
+    }
     return res.status(200).json(profile);
   } catch (err) {
     console.log(err);
@@ -482,7 +481,6 @@ router.get("/getallinv/:id", async (req, res) => {
 // change ticket status
 router.put("/changestatus/:id", async (req, res) => {
   try {
-    console.log(req.body.status)
     const Tickets = await Ticket.findByIdAndUpdate(
       req.params.id,
       {
@@ -492,12 +490,91 @@ router.put("/changestatus/:id", async (req, res) => {
       },
       { new: true }
     );
-    console.log(Tickets);
     res.json(Tickets);
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "internal server err" });
   }
-}
-);
+});
+
+router.post("/removeinv", async (req, res) => {
+  try {
+    const profile = await Profile.findOneAndUpdate(
+      { _id: req.body.id },
+      {
+        $pull: {
+          invitationsin: { prof: req.body.ids },
+        },
+      },
+      { new: true }
+    );  
+    const profile2 = await Profile.findOneAndUpdate(
+      { _id: req.body.ids },
+      {
+        $pull: {
+          invitationsout: { prof: req.body.id },
+        },
+      },
+      { new: true }
+    );
+    if (profile2) {
+      return res.status(200).json(profile);
+    }
+    return res.status(200).json(profile);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+}); 
+
+router.post("/notifsin", async (req, res) => {
+  try {
+   counting = await User.aggregate ([
+    {
+      '$match': {
+        '_id': mongoose.Types.ObjectId(req.body.id)
+      }
+    }, {
+      '$unwind': {
+        'path': '$profiles'
+      }
+    }, {
+      '$lookup': {
+        'from': 'profiles', 
+        'localField': 'profiles', 
+        'foreignField': '_id', 
+        'as': 'prof'
+      }
+    }, {
+      '$set': {
+        'profs': {
+          '$arrayElemAt': [
+            '$prof', 0
+          ]
+        }
+      }
+    }, {
+      '$project': {
+        'profs': 1
+      }
+    }, {
+      '$unwind': {
+        'path': '$profs.invitationsin'
+      }
+    }, {
+      '$count': 'prof'
+    }
+  ]);
+  if (counting[0]?.prof > 0) {
+    res.json(counting[0]?.prof);
+  }
+  else {
+    res.json(0);
+  }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+
 module.exports = router;

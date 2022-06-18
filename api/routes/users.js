@@ -123,7 +123,22 @@ router.get("/:id", async (req, res) => {
 //Register
 
 //Delete User
-
+router.get("/pop/:id", async (req, res) => {
+  try {
+    const profile = await User.findById(req.params.id)
+      .populate("profiles")
+      .populate({
+        path: "friends",
+        populate: {
+          path: "prof",
+        },
+      });
+    res.json(profile);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
 
 
 //Delete User
@@ -270,6 +285,7 @@ router.post("/addadmin", upload.single("userimage"), async (req, res) => {
     if (req.file){
       myfile = req?.file.filename;
     }
+    console.log(req.body);
     User.create({
       name: req.body.name,
       lastn: req.body.lastn,
@@ -281,7 +297,7 @@ router.post("/addadmin", upload.single("userimage"), async (req, res) => {
       userimage: myfile,
       graveyard: d._id,
       phone: req.body.phone,
-      sub: req.body.sub ,
+      sub: req.body.sub,
       vendor: req.body.vendor
     }).then((k)=> {
       User.findByIdAndUpdate(req.body.vendor, { $push: {clients: k._id} }, {
