@@ -11,7 +11,7 @@ const Graveyard = new Schema(
     Lng: String,
     Lat: String,
     area: String,
-    users: [{ type: Schema.Types.ObjectId, ref: "Users" }],
+    clients: [{ type: Schema.Types.ObjectId, ref: "Users" }],
     persons: [{ type: Schema.Types.ObjectId, ref: "Profile" }],
     staff: [{ type: Schema.Types.ObjectId, ref: "Users" }],
     

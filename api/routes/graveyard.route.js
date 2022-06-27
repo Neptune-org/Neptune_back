@@ -6,7 +6,8 @@ const bcrypt = require("bcrypt");
 const Prices = require("../models/Price");
 const multer = require("multer");
 const path = require("path");
-
+const User = require("../models/Users");
+const Profile = require("../models/Profile");
 
 router.get("/", async (req, res) => {
   try {
@@ -56,9 +57,13 @@ router.get("/:id", async (req, res) => {
 //Delete User
 
 router.put("/:id", async (req, res) => {
-  const updatedGraveyard = await Graveyard.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-  });
+  const updatedGraveyard = await Graveyard.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    {
+      new: true,
+    }
+  );
   res.json({ message: "Graveyard updated succesfully" });
 });
 
@@ -93,7 +98,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage: storage, fileFilter: fileFilter });
 
 router.post("/upload-file", upload.single("image"), async (req, res) => {
- // console.log(req.body);
+  // console.log(req.body);
   res.json({ message: "done" });
 });
 
@@ -107,6 +112,72 @@ router.post("/", async (req, res) => {
   const graveyard = req.body;
   const registredgraveyard = await Graveyard.create(graveyard);
   res.json(registredgraveyard);
+});
+
+router.post("/now", async (req, res) => {
+  //console.log(req.body);
+  try {
+    const d = new Date();
+    let month = d.getMonth();
+    const newCreatedProfiles = await Profile.find({
+      createdAt: { $gte: new Date(d.getFullYear(), month, 1) },
+    });
+    res.json(newCreatedProfiles);
+  } catch (error) {
+    res.json(error);
+  }
+});
+router.post("/allusers", async (req, res) => {
+  //console.log(req.body);
+  try {
+    const d = new Date();
+    let month = d.getMonth();
+    const date1 = new Date(req.body.startDate);
+    const date2 = new Date(req.body.endDate);
+
+    const profiles = await Profile.find({});
+    const users = await User.find({});
+    const graveyards = await Graveyard.find({});
+    const newCreatedProfiles = await Profile.find({
+      createdAt: { $gte: date1, $lte: date2 },
+    });
+    const response = {
+      profiles: profiles.length,
+      users: users.length,
+      graveyards: graveyards.length,
+      newCreatedProfiles: newCreatedProfiles,
+    };
+    res.json(response);
+  } catch (error) {
+    res.json(error);
+  }
+});
+
+router.post("/graveyardgraph", async (req, res) => {
+  //console.log(req.body);
+  try {
+
+    const date1 = new Date(req.body.startDate);
+    const date2 = new Date(req.body.endDate);
+    const allofthem = await Graveyard.find({}).populate("persons");
+    const totalprofiles = allofthem.map((obj) => ({
+      _id:obj?._id,
+      name: obj?.name,
+      totalprofiles: obj?.persons?.length,
+      totalclients:obj?.clients?.length,
+      newprofiles: obj?.persons?.filter(
+        (obj) =>
+          obj.createdAt >
+          date1 &&
+          obj.createdAt <
+          date2
+
+      ).length,
+    }));
+    res.json(totalprofiles);
+  } catch (error) {
+    res.json(error);
+  }
 });
 
 module.exports = router;

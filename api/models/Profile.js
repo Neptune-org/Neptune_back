@@ -22,6 +22,7 @@ const Profile = new Schema(
     friends: [{ lien: String, prof: { type: Schema.Types.ObjectId, ref: "Profile" } }],
     invitationsout: [{ lien: String, prof: { type: Schema.Types.ObjectId, ref: "Profile" } }],
     invitationsin: [{ lien: String, prof: { type: Schema.Types.ObjectId, ref: "Profile" } }],
+    timeline: [{ message: String, date:String}],
     cords: String, // Funérailles cords
     modeDeath: String, //  Modes de funérailles
     profileEmail: String,

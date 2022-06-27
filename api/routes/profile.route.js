@@ -87,6 +87,11 @@ router.get("/:id", async (req, res) => {
         path: "prof",
       },
     });
+    const profileSortedTimeline = profile.timeline.sort((a, b) => {
+      return new Date(b.date) - new Date(a.date);
+    }
+    );
+    profile.timeline = profileSortedTimeline;
     res.json(profile);
   } catch (err) {
     console.log(err);
@@ -106,6 +111,35 @@ router.get("/mytickets/:id", async (req, res) => {
     res.status(500).json({ message: "internal server err" });
   }
 });
+
+router.get("/stafftickets/:id", async (req, res) => {
+  try {
+    const mytickets = await Ticket.find({ assigne: req.params.id });
+    const opentickets = await Ticket.find({ status: "open" });
+    const tickets = mytickets.concat(opentickets)
+
+    res.json(tickets);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+
+router.post("/assignticket/:id", async (req, res) => {
+  try {
+    const ticket = await Ticket.findOneAndUpdate(
+      { _id: req.params.id },
+      {status:"progress", assigne: req.body.assigne },
+      { new: true }
+    );
+    res.json(ticket);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+
+
 
 router.get("/getticket/:id", async (req, res) => {
   try {
@@ -157,6 +191,26 @@ router.put("/sendmessage/:id", async (req, res) => {
     res.status(500).json({ message: "internal server err" });
   }
 });
+
+router.put("/addhistory/:id", async (req, res) => {
+  try {
+    let tick = {
+      history: {
+        msg: req.body.message,
+      },
+    };
+    const ticket = await Ticket.findByIdAndUpdate(
+      req.params.id,
+      { $push: { history: tick.history } },
+      { new: true }
+    );
+    res.json(ticket);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+}
+);
 
 router.put("/:id", async (req, res) => {
   const updateProfile = await Profile.findByIdAndUpdate(
@@ -576,5 +630,30 @@ router.post("/notifsin", async (req, res) => {
     res.status(500).json({ message: "internal server err" });
   }
 });
+
+
+router.post("/addtimeline/:id", async (req, res) => {
+  try {
+    const timeline ={
+      message : req.body.message,
+      date : req.body.date,
+    }
+    const profile = await Profile.findOneAndUpdate(
+      { _id: req.params.id },
+      {
+        $push: {
+          timeline: timeline,
+        },
+      },
+      { new: true }
+    );  
+   
+  
+    return res.status(200).json(profile);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+}); 
 
 module.exports = router;
