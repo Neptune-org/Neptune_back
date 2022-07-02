@@ -38,8 +38,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-
-
 router.get("/getsupers", async (req, res) => {
   try {
     const allUsers = await User.find({ role: "superadmin" });
@@ -52,7 +50,15 @@ router.get("/getsupers", async (req, res) => {
 
 router.get("/getstaff/:id", async (req, res) => {
   try {
-    const allUsers = await User.find({ $or: [{ role: "gstaff"},{ role: "gadmin"},{ role: "gcompta"}] , graveyard:req.params.id });
+    const allUsers = await User.find({
+      $or: [
+        { role: "admin" },
+        { role: "gstaff" },
+        { role: "gadmin" },
+        { role: "gcompta" },
+      ],
+      graveyard: req.params.id,
+    });
     res.json(allUsers);
   } catch (err) {
     console.log(err);
@@ -62,7 +68,9 @@ router.get("/getstaff/:id", async (req, res) => {
 
 router.get("/getastaff", async (req, res) => {
   try {
-    const allUsers = await User.find({ $or: [{ role: "sales"},{ role: "sadmin"},{ role: "help"}]});
+    const allUsers = await User.find({
+      $or: [{ role: "sales" }, { role: "sadmin" }, { role: "help" }],
+    });
     res.json(allUsers);
   } catch (err) {
     console.log(err);
@@ -82,7 +90,10 @@ router.get("/getadmins", async (req, res) => {
 
 router.get("/getadminsstaff/:id", async (req, res) => {
   try {
-    const allUsers = await User.find({ role: "admin",vendor:req.params.id }).populate("graveyard");
+    const allUsers = await User.find({
+      role: "admin",
+      vendor: req.params.id,
+    }).populate("graveyard");
     res.json(allUsers);
   } catch (err) {
     console.log(err);
@@ -103,12 +114,10 @@ router.get("/getclients/:id", async (req, res) => {
   }
 });
 
-
-
 router.get("/getprofiles/:id", async (req, res) => {
   try {
     const allProfiles = await Profile.find({
-      graveyard: req.params.id, 
+      graveyard: req.params.id,
     });
     res.json(allProfiles);
   } catch (err) {
@@ -123,7 +132,7 @@ router.post("/getfiltredprofiles/:id", async (req, res) => {
     const date1 = new Date(req.body.startDate);
     const date2 = new Date(req.body.endDate);
     const allProfiles = await Profile.find({
-      graveyard: req.params.id, 
+      graveyard: req.params.id,
       createdAt: { $gte: date1, $lte: date2 },
     }).populate("graveyard");
     res.json(allProfiles);
@@ -165,7 +174,6 @@ router.get("/pop/:id", async (req, res) => {
     res.status(500).json({ message: "internal server err" });
   }
 });
-
 
 //Delete User
 router.delete("/:id", async (req, res) => {
@@ -267,10 +275,10 @@ router.post("/addsuperadmin", upload.single("userimage"), async (req, res) => {
   const myuser = req.body;
   console.log(req.body);
   myuser.password = hashedpassword;
-  let myfile = "avatar.jpg"
-    if (req.file){
-      myfile = req?.file.filename;
-    }
+  let myfile = "avatar.jpg";
+  if (req.file) {
+    myfile = req?.file.filename;
+  }
   const newuser = {
     name: req.body.name,
     lastn: req.body.lastn,
@@ -307,8 +315,8 @@ router.post("/addadmin", upload.single("userimage"), async (req, res) => {
     Lat: req.body.latitude,
   };
   const registreduser = await Graveyard.create(mygraveyard).then((d) => {
-    let myfile = "avatar.jpg"
-    if (req.file){
+    let myfile = "avatar.jpg";
+    if (req.file) {
       myfile = req?.file.filename;
     }
     User.create({
@@ -323,11 +331,15 @@ router.post("/addadmin", upload.single("userimage"), async (req, res) => {
       graveyard: d._id,
       phone: req.body.phone,
       sub: req.body.sub,
-      vendor: req.body.vendor
-    }).then(async (k)=> {
-    const l = await  User.findByIdAndUpdate(req.body.vendor, { $push: {clients: k._id} }, {
-        new: true,
-      })
+      vendor: req.body.vendor,
+    }).then(async (k) => {
+      const l = await User.findByIdAndUpdate(
+        req.body.vendor,
+        { $push: { clients: k._id } },
+        {
+          new: true,
+        }
+      );
     });
   });
   const transporter = nodemailer.createTransport({
@@ -359,37 +371,34 @@ router.post("/addadmin", upload.single("userimage"), async (req, res) => {
   });
   res.json(registreduser);
 });
-router.put("/:id",upload.single("userimage"), async (req, res) => {
+router.put("/:id", upload.single("userimage"), async (req, res) => {
   try {
     const usercheck = await User.findOne({ email: req.body.email });
-  if (usercheck !== null && usercheck._id != req.params.id) {
-    return res.status(401).json({ message: "EMAIL_EXISTS" });
-  }
-  if (req.body.password){
-    const hashedpassword = await bcrypt.hash(req.body.password, 10);
-    const myuser = req.body;
-    myuser.password = hashedpassword;
-      if (req.file){
+    if (usercheck !== null && usercheck._id != req.params.id) {
+      return res.status(401).json({ message: "EMAIL_EXISTS" });
+    }
+    if (req.body.password) {
+      const hashedpassword = await bcrypt.hash(req.body.password, 10);
+      const myuser = req.body;
+      myuser.password = hashedpassword;
+      if (req.file) {
         myuser.userimage = req.file.filename;
       }
-    const updateduser = await User.findByIdAndUpdate(req.params.id, myuser, {
-      new: true,
-    });
-    res.status(200).json(updateduser);
-  }
-  else {
-    const myuser = req.body;
-      if (req.file){
+      const updateduser = await User.findByIdAndUpdate(req.params.id, myuser, {
+        new: true,
+      });
+      res.status(200).json(updateduser);
+    } else {
+      const myuser = req.body;
+      if (req.file) {
         myuser.userimage = req.file.filename;
       }
-    const updateduser = await User.findByIdAndUpdate(req.params.id, myuser, {
-      new: true,
-    });
-    res.status(200).json(updateduser);
-  }
-
-
-} catch (err) {
+      const updateduser = await User.findByIdAndUpdate(req.params.id, myuser, {
+        new: true,
+      });
+      res.status(200).json(updateduser);
+    }
+  } catch (err) {
     console.log(err);
     res.status(500).json({ message: "internal server err" });
   }
@@ -412,10 +421,10 @@ router.post("/addclient", upload.single("userimage"), async (req, res) => {
       wow.push(i._id);
     });
   });
-  let myfile = "avatar.jpg"
-    if (req.file){
-      myfile = req?.file.filename;
-    }
+  let myfile = "avatar.jpg";
+  if (req.file) {
+    myfile = req?.file.filename;
+  }
   const registreduser = await User.create({
     name: req.body.name,
     lastn: req.body.lastn,
@@ -430,20 +439,36 @@ router.post("/addclient", upload.single("userimage"), async (req, res) => {
     userimage: myfile,
     graveyard: req.body.graveyard,
     profiles: wow,
-    vendor : req.body.vendor
+    vendor: req.body.vendor,
   });
-  const addingprof =  await User.findByIdAndUpdate(req.body.vendor, { $push: { profiles: wow } }, {
-    new: true,
-  });
-  const addingclient =  await User.findByIdAndUpdate(req.body.vendor, { $push: {clients: registreduser._id} }, {
-    new: true,
-  });
-  const addingtograveyard = await Graveyard.findByIdAndUpdate(req.body.graveyard, { $push: { persons: wow } }, {
-    new: true,
-  });
-  const addingclienttograveyard= await Graveyard.findByIdAndUpdate(req.body.graveyard, { $push: { clients: registreduser._id } }, {
-    new: true,
-  });
+  const addingprof = await User.findByIdAndUpdate(
+    req.body.vendor,
+    { $push: { profiles: wow } },
+    {
+      new: true,
+    }
+  );
+  const addingclient = await User.findByIdAndUpdate(
+    req.body.vendor,
+    { $push: { clients: registreduser._id } },
+    {
+      new: true,
+    }
+  );
+  const addingtograveyard = await Graveyard.findByIdAndUpdate(
+    req.body.graveyard,
+    { $push: { persons: wow } },
+    {
+      new: true,
+    }
+  );
+  const addingclienttograveyard = await Graveyard.findByIdAndUpdate(
+    req.body.graveyard,
+    { $push: { clients: registreduser._id } },
+    {
+      new: true,
+    }
+  );
 
   res.json(registreduser + addProfile);
 });
@@ -516,8 +541,8 @@ router.post("/addgstaff", upload.single("userimage"), async (req, res) => {
   const hashedpassword = await bcrypt.hash(rand, 7);
   const myuser = req.body;
   myuser.password = hashedpassword;
-  let myfile = "avatar.jpg"
-  if (req.file){
+  let myfile = "avatar.jpg";
+  if (req.file) {
     myfile = req?.file.filename;
   }
   const registreduser = await User.create({
@@ -562,10 +587,6 @@ router.post("/addgstaff", upload.single("userimage"), async (req, res) => {
   res.json(registreduser);
 });
 
-
-
-
-
 router.post("/addastaff", upload.single("userimage"), async (req, res) => {
   const usercheck = await User.findOne({ email: req.body.email });
   if (usercheck !== null) {
@@ -577,8 +598,8 @@ router.post("/addastaff", upload.single("userimage"), async (req, res) => {
   const hashedpassword = await bcrypt.hash(rand, 7);
   const myuser = req.body;
   myuser.password = hashedpassword;
-  let myfile = "avatar.jpg"
-  if (req.file){
+  let myfile = "avatar.jpg";
+  if (req.file) {
     myfile = req?.file.filename;
   }
   const registreduser = await User.create({
@@ -622,22 +643,26 @@ router.post("/addastaff", upload.single("userimage"), async (req, res) => {
   res.json(registreduser);
 });
 
-
 router.post("/staffreporting/:id", async (req, res) => {
   try {
     const date1 = new Date(req.body.startDate);
     const date2 = new Date(req.body.endDate);
-    const profile = await User.findById(req.params.id)
-      .populate({
-        path: "clients",
-        populate: {
-          path: "graveyard",
-        },
-      });
-
-    const filtredClients = profile.clients.filter((obj) => (
-      obj.CreatedAt >= date1 && obj.CreatedAt <= date2
-    ));
+    const profile = await User.findById(req.params.id).populate({
+      path: "clients",
+      populate: {
+        path: "graveyard",
+      },
+    });
+    //filter created clients with date
+    let clients = [];
+    const filtredClients = profile.clients.map((client) => {
+      if (client.createdAt >= date1 && client.createdAt <= date2) {
+        clients.push(client);
+      }
+    });
+    profile.clients = clients;
+    console.log(profile);
+    // console.log((filtredClients))
     res.json(profile);
   } catch (err) {
     console.log(err);
@@ -647,8 +672,35 @@ router.post("/staffreporting/:id", async (req, res) => {
 
 router.get("/getadminbygrave/:id", async (req, res) => {
   try {
-    const allUsers = await User.find({ role: "admin",graveyard:req.params.id }).populate("graveyard");
+    const allUsers = await User.find({
+      role: "admin",
+      graveyard: req.params.id,
+    }).populate("graveyard");
     res.json(allUsers[0]);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+
+router.post("/gravestaffreporting/:id", async (req, res) => {
+  try {
+    const date1 = new Date(req.body.startDate);
+    const date2 = new Date(req.body.endDate);
+    const profile = await User.findById(req.params.id).populate("profiles");
+    Date.prototype.addDays = function(days) {
+      var date = new Date(this.valueOf());
+      date.setDate(date.getDate() + days);
+      return date;
+  }
+    let clients = [];
+    const filtredClients = profile.profiles.map((client) => {
+      if (client.createdAt >= date1 && client.createdAt <= date2.addDays(1)) {
+        clients.push(client);
+      }
+    });
+    profile.profiles = clients;
+    res.json(profile);
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "internal server err" });

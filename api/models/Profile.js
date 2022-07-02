@@ -19,6 +19,7 @@ const Profile = new Schema(
     banner: String,
     profileImage:String,
     bio: String,
+    albums : [{name:String,images: [String]}],
     friends: [{ lien: String, prof: { type: Schema.Types.ObjectId, ref: "Profile" } }],
     invitationsout: [{ lien: String, prof: { type: Schema.Types.ObjectId, ref: "Profile" } }],
     invitationsin: [{ lien: String, prof: { type: Schema.Types.ObjectId, ref: "Profile" } }],

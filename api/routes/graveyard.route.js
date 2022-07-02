@@ -180,4 +180,57 @@ router.post("/graveyardgraph", async (req, res) => {
   }
 });
 
+router.post("/alluserscim/:id", async (req, res) => {
+  //console.log(req.body);
+  try {
+    const d = new Date();
+    let month = d.getMonth();
+    const date1 = new Date(req.body.startDate);
+    const date2 = new Date(req.body.endDate);
+
+    const profiles = await Profile.find({});
+    const users = await User.find({graveyard:req.params.id});
+    const graveyards = await Graveyard.find({_id:req.params.id});
+    const newCreatedProfiles = await Profile.find({
+      createdAt: { $gte: date1, $lte: date2 },graveyard:req.params.id
+    });
+    const response = {
+      profiles: profiles.length,
+      users: users.length,
+      graveyards: graveyards.length,
+      newCreatedProfiles: newCreatedProfiles,
+    };
+    res.json(response);
+  } catch (error) {
+    res.json(error);
+  }
+});
+
+router.post("/graveyardgraphcim/:findById", async (req, res) => {
+  //console.log(req.body);
+  try {
+
+    const date1 = new Date(req.body.startDate);
+    const date2 = new Date(req.body.endDate);
+    const allofthem = await Graveyard.find({_id:req.params.id}).populate("persons");
+    const totalprofiles = allofthem.map((obj) => ({
+      _id:obj?._id,
+      name: obj?.name,
+      totalprofiles: obj?.persons?.length,
+      totalclients:obj?.clients?.length,
+      newprofiles: obj?.persons?.filter(
+        (obj) =>
+          obj.createdAt >
+          date1 &&
+          obj.createdAt <
+          date2
+
+      ).length,
+    }));
+    res.json(totalprofiles);
+  } catch (error) {
+    res.json(error);
+  }
+});
+
 module.exports = router;

@@ -656,4 +656,37 @@ router.post("/addtimeline/:id", async (req, res) => {
   }
 }); 
 
+router.post("/addphototoalbum/:id", upload.fields([
+  {
+    name: "files",
+    maxCount: 30,
+  },
+]), async (req, res) => {
+  try {
+    const allfiles = req.files?.files?.map((file) => file?.filename);
+    console.log(allfiles)
+
+    const album ={
+      name : req.body.name,
+      images : allfiles,
+    }
+console.log(album )
+   
+    //add photo to album
+    const profile = await Profile.findOneAndUpdate(
+      { _id: req.params.id },
+      {
+        $push: {
+          albums: album,
+        },
+      },
+      { new: true }
+    );
+    return res.status(200).json(profile);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+}); 
+
 module.exports = router;
