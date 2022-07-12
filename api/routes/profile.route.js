@@ -22,7 +22,12 @@ router.get("/", async (req, res) => {
 
 router.get("/alltickets", async (req, res) => {
   try {
-    const tickets = await Ticket.find({}).populate("prop");
+    const tickets = await Ticket.find({}).populate({
+      path: "prop",
+      populate: {
+        path: "graveyard",
+      },
+    }).populate("assigne");
     res.json(tickets);
   } catch (err) {
     console.log(err);
@@ -114,8 +119,18 @@ router.get("/mytickets/:id", async (req, res) => {
 
 router.get("/stafftickets/:id", async (req, res) => {
   try {
-    const mytickets = await Ticket.find({ assigne: req.params.id });
-    const opentickets = await Ticket.find({ status: "open" });
+    const mytickets = await Ticket.find({ assigne: req.params.id }).populate({
+      path: "prop",
+      populate: {
+        path: "graveyard",
+      },
+    });
+    const opentickets = await Ticket.find({ status: "open" }).populate({
+      path: "prop",
+      populate: {
+        path: "graveyard",
+      },
+    });
     const tickets = mytickets.concat(opentickets)
 
     res.json(tickets);
