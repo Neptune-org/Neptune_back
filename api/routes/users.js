@@ -364,7 +364,7 @@ router.post("/addadmin", upload.single("userimage"), async (req, res) => {
   });
 
   let info = await transporter.sendMail({
-    from: "mohamedaziz.sahnoun@esprit..tn",
+    from: process.env.EMAIL,
     to: req.body.email,
     subject: "Skiesbook",
     html: html,
@@ -470,6 +470,34 @@ router.post("/addclient", upload.single("userimage"), async (req, res) => {
     }
   );
 
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.PASS,
+    },
+  });
+  const template = fs.readFileSync(
+    path.resolve("./api/views", "sendmail.html"),
+    {
+      encoding: "utf-8",
+    }
+  );
+  const html = ejs.render(template, {
+    name: req.body.name,
+    lastname: req.body.lastn,
+    password: rand,
+    email: req.body.email,
+    grave: req.body.gname,
+  });
+
+  let info = await transporter.sendMail({
+    from: process.env.EMAIL,
+    to: req.body.email,
+    subject: "Skiesbook",
+    html: html,
+  });
+
   res.json(registreduser + addProfile);
 });
 router.post("/resetpassword", async (req, res) => {
@@ -481,7 +509,7 @@ router.post("/resetpassword", async (req, res) => {
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
-          user: "mohamedaziz.sahnoun@esprit..tn",
+          user: process.env.EMAIL,
           pass: process.env.PASS,
         },
       });
@@ -499,7 +527,7 @@ router.post("/resetpassword", async (req, res) => {
       });
 
       let info = await transporter.sendMail({
-        from: "mohamedaziz.sahnoun@esprit..tn",
+        from: process.env.EMAIL,
         to: req.body.email,
         subject: "Skiesbook Reset Password",
         html: html,
@@ -525,7 +553,6 @@ router.post("/resetpasswordrequest", async (req, res) => {
       new: true,
     }
   );
-  console.log(req.body);
   res.json({ message: "Password updated succesfully", status: 200 });
 });
 
@@ -661,7 +688,6 @@ router.post("/staffreporting/:id", async (req, res) => {
       }
     });
     profile.clients = clients;
-    console.log(profile);
     // console.log((filtredClients))
     res.json(profile);
   } catch (err) {

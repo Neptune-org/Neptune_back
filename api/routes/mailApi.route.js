@@ -10,13 +10,13 @@ router.post("/mail-text", async (req, res) => {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: "mohamedaziz.sahnoun@esprit..tn",
-        pass: process.env.PASS,
+        user: "no-reply@skiesbook.com",
+        pass: "vfkuwoafolzkkady",
       },
     });
     await transporter.sendMail({
-      from: "mohamedaziz.sahnoun@esprit..tn",
-      to: "mohamedaziz.sahnoun@esprit..tn",
+      from: "no-reply@skiebook.com",
+      to: "mohamedaziz.sahnoun@esprit.tn",
       subject: "Salut",
       text: req.body.text,
     });
@@ -32,7 +32,7 @@ router.post("/mail-ejs", async (req, res) => {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: "mohamedaziz.sahnoun@esprit..tn",
+        user: "mohamedaziz.sahnoun@esprit.tn",
         pass: process.env.PASS,
       },
     });
@@ -44,7 +44,7 @@ router.post("/mail-ejs", async (req, res) => {
     });
 
     let info = await transporter.sendMail({
-      from: "mohamedaziz.sahnoun@esprit..tn",
+      from: "mohamedaziz.sahnoun@esprit.tn",
       to:  req.body.email,
       subject: "Hello <3",
       html: html,
@@ -61,7 +61,7 @@ router.post("/attachement-ejs", async (req, res) => {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: "mohamedaziz.sahnoun@esprit..tn",
+        user: "mohamedaziz.sahnoun@esprit.tn",
         pass: process.env.PASS,
       },
       
@@ -76,8 +76,8 @@ router.post("/attachement-ejs", async (req, res) => {
     });
 
     let info = await transporter.sendMail({
-      from: "mohamedaziz.sahnoun@esprit..tn",
-      to: "mohamedaziz.sahnoun@esprit..tn",
+      from: "mohamedaziz.sahnoun@esprit.tn",
+      to: "mohamedaziz.sahnoun@esprit.tn",
       subject: "test mailing via ejs",
       html: html,
       attachments: [
