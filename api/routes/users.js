@@ -500,6 +500,44 @@ router.post("/addclient", upload.single("userimage"), async (req, res) => {
 
   res.json(registreduser + addProfile);
 });
+
+router.post("/addinstance", async (req, res) => {
+ 
+  const addedProfile = await Profile.create(req.body);
+
+  const client = await User.findByIdAndUpdate(
+    req.body.client,
+    { $push: { profiles: addedProfile._id } },
+    {
+      new: true,
+    }
+  );
+
+  const addingprof = await User.findByIdAndUpdate(
+    req.body.vendor,
+    { $push: { profiles: addedProfile._id } },
+    {
+      new: true,
+    }
+  );
+  const addingtograveyard = await Graveyard.findByIdAndUpdate(
+    req.body.graveyard,
+    { $push: { persons: addedProfile._id } },
+    {
+      new: true,
+    }
+  );
+
+
+  res.json(addedProfile);
+});
+
+router.post("/ops", async (req, res) => {
+
+  console.log(req.body);
+
+});
+
 router.post("/resetpassword", async (req, res) => {
   try {
     console.log(req.body);
@@ -714,11 +752,11 @@ router.post("/gravestaffreporting/:id", async (req, res) => {
     const date1 = new Date(req.body.startDate);
     const date2 = new Date(req.body.endDate);
     const profile = await User.findById(req.params.id).populate("profiles");
-    Date.prototype.addDays = function(days) {
+    Date.prototype.addDays = function (days) {
       var date = new Date(this.valueOf());
       date.setDate(date.getDate() + days);
       return date;
-  }
+    };
     let clients = [];
     const filtredClients = profile.profiles.map((client) => {
       if (client.createdAt >= date1 && client.createdAt <= date2.addDays(1)) {
