@@ -9,7 +9,6 @@ const multer = require("multer");
 const path = require("path");
 const mongoose = require("mongoose");
 
-
 router.get("/", async (req, res) => {
   try {
     const profile = await Profile.find({}).populate("cimitiere");
@@ -22,12 +21,14 @@ router.get("/", async (req, res) => {
 
 router.get("/alltickets", async (req, res) => {
   try {
-    const tickets = await Ticket.find({}).populate({
-      path: "prop",
-      populate: {
-        path: "graveyard",
-      },
-    }).populate("assigne");
+    const tickets = await Ticket.find({})
+      .populate({
+        path: "prop",
+        populate: {
+          path: "graveyard",
+        },
+      })
+      .populate("assigne");
     res.json(tickets);
   } catch (err) {
     console.log(err);
@@ -86,16 +87,17 @@ router.post("/searchbyid", async (req, res) => {
 // Get Profile by ID
 router.get("/:id", async (req, res) => {
   try {
-    const profile = await Profile.findById(req.params.id).populate({
-      path: "friends",
-      populate: {
-        path: "prof",
+    const profile = await Profile.findById(req.params.id).populate(
+      {
+        path: "friends",
+        populate: {
+          path: "prof",
+        },
       },
-    });
+    ).populate("graveyard");
     const profileSortedTimeline = profile.timeline.sort((a, b) => {
       return new Date(b.date) - new Date(a.date);
-    }
-    );
+    });
     profile.timeline = profileSortedTimeline;
     res.json(profile);
   } catch (err) {
@@ -103,8 +105,6 @@ router.get("/:id", async (req, res) => {
     res.status(500).json({ message: "internal server err" });
   }
 });
-
-
 
 //Register
 router.get("/mytickets/:id", async (req, res) => {
@@ -131,7 +131,7 @@ router.get("/stafftickets/:id", async (req, res) => {
         path: "graveyard",
       },
     });
-    const tickets = mytickets.concat(opentickets)
+    const tickets = mytickets.concat(opentickets);
 
     res.json(tickets);
   } catch (err) {
@@ -144,7 +144,7 @@ router.post("/assignticket/:id", async (req, res) => {
   try {
     const ticket = await Ticket.findOneAndUpdate(
       { _id: req.params.id },
-      {status:"progress", assigne: req.body.assigne },
+      { status: "progress", assigne: req.body.assigne },
       { new: true }
     );
     res.json(ticket);
@@ -153,8 +153,6 @@ router.post("/assignticket/:id", async (req, res) => {
     res.status(500).json({ message: "internal server err" });
   }
 });
-
-
 
 router.get("/getticket/:id", async (req, res) => {
   try {
@@ -224,8 +222,7 @@ router.put("/addhistory/:id", async (req, res) => {
     console.log(err);
     res.status(500).json({ message: "internal server err" });
   }
-}
-);
+});
 
 router.put("/:id", async (req, res) => {
   const updateProfile = await Profile.findByIdAndUpdate(
@@ -576,7 +573,7 @@ router.post("/removeinv", async (req, res) => {
         },
       },
       { new: true }
-    );  
+    );
     const profile2 = await Profile.findOneAndUpdate(
       { _id: req.body.ids },
       {
@@ -594,65 +591,67 @@ router.post("/removeinv", async (req, res) => {
     console.log(err);
     res.status(500).json({ message: "internal server err" });
   }
-}); 
+});
 
 router.post("/notifsin", async (req, res) => {
   try {
-   counting = await User.aggregate ([
-    {
-      '$match': {
-        '_id': mongoose.Types.ObjectId(req.body.id)
-      }
-    }, {
-      '$unwind': {
-        'path': '$profiles'
-      }
-    }, {
-      '$lookup': {
-        'from': 'profiles', 
-        'localField': 'profiles', 
-        'foreignField': '_id', 
-        'as': 'prof'
-      }
-    }, {
-      '$set': {
-        'profs': {
-          '$arrayElemAt': [
-            '$prof', 0
-          ]
-        }
-      }
-    }, {
-      '$project': {
-        'profs': 1
-      }
-    }, {
-      '$unwind': {
-        'path': '$profs.invitationsin'
-      }
-    }, {
-      '$count': 'prof'
+    counting = await User.aggregate([
+      {
+        $match: {
+          _id: mongoose.Types.ObjectId(req.body.id),
+        },
+      },
+      {
+        $unwind: {
+          path: "$profiles",
+        },
+      },
+      {
+        $lookup: {
+          from: "profiles",
+          localField: "profiles",
+          foreignField: "_id",
+          as: "prof",
+        },
+      },
+      {
+        $set: {
+          profs: {
+            $arrayElemAt: ["$prof", 0],
+          },
+        },
+      },
+      {
+        $project: {
+          profs: 1,
+        },
+      },
+      {
+        $unwind: {
+          path: "$profs.invitationsin",
+        },
+      },
+      {
+        $count: "prof",
+      },
+    ]);
+    if (counting[0]?.prof > 0) {
+      res.json(counting[0]?.prof);
+    } else {
+      res.json(0);
     }
-  ]);
-  if (counting[0]?.prof > 0) {
-    res.json(counting[0]?.prof);
-  }
-  else {
-    res.json(0);
-  }
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "internal server err" });
   }
 });
 
-
 router.post("/addtimeline/:id", async (req, res) => {
   try {
-    const timeline ={
-      message : req.body.message,
-      date : req.body.date,
-    }
+    const timeline = {
+      message: req.body.message,
+      date: req.body.date,
+    };
     const profile = await Profile.findOneAndUpdate(
       { _id: req.params.id },
       {
@@ -661,47 +660,50 @@ router.post("/addtimeline/:id", async (req, res) => {
         },
       },
       { new: true }
-    );  
-   
-  
-    return res.status(200).json(profile);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "internal server err" });
-  }
-}); 
-
-router.post("/addphototoalbum/:id", upload.fields([
-  {
-    name: "files",
-    maxCount: 30,
-  },
-]), async (req, res) => {
-  try {
-    const allfiles = req.files?.files?.map((file) => file?.filename);
-    console.log(allfiles)
-
-    const album ={
-      name : req.body.name,
-      images : allfiles,
-    }
-console.log(album )
-   
-    //add photo to album
-    const profile = await Profile.findOneAndUpdate(
-      { _id: req.params.id },
-      {
-        $push: {
-          albums: album,
-        },
-      },
-      { new: true }
     );
+
     return res.status(200).json(profile);
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "internal server err" });
   }
-}); 
+});
+
+router.post(
+  "/addphototoalbum/:id",
+  upload.fields([
+    {
+      name: "files",
+      maxCount: 30,
+    },
+  ]),
+  async (req, res) => {
+    try {
+      const allfiles = req.files?.files?.map((file) => file?.filename);
+      console.log(allfiles);
+
+      const album = {
+        name: req.body.name,
+        images: allfiles,
+      };
+      console.log(album);
+
+      //add photo to album
+      const profile = await Profile.findOneAndUpdate(
+        { _id: req.params.id },
+        {
+          $push: {
+            albums: album,
+          },
+        },
+        { new: true }
+      );
+      return res.status(200).json(profile);
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "internal server err" });
+    }
+  }
+);
 
 module.exports = router;
