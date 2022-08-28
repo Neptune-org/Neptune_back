@@ -706,4 +706,18 @@ router.post(
   }
 );
 
+router.post("/addcomment/:id", async (req, res) => {
+  try {
+    const profile = await Profile.findByIdAndUpdate(
+      req.params.id,
+      { $push: { comments: req.body } },
+      { new: true }
+    );
+    res.json(profile);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+
 module.exports = router;
