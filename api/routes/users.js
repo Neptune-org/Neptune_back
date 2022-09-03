@@ -175,6 +175,16 @@ router.get("/pop/:id", async (req, res) => {
   }
 });
 
+router.get("/comments/:id", async (req, res) => {
+  try {
+    const profile = await User.findById(req.params.id).populate("profiles");
+    res.json(profile);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+
 //Delete User
 router.delete("/:id", async (req, res) => {
   await User.deleteOne({ _id: req.params.id })
@@ -502,7 +512,6 @@ router.post("/addclient", upload.single("userimage"), async (req, res) => {
 });
 
 router.post("/addinstance", async (req, res) => {
- 
   const addedProfile = await Profile.create(req.body);
 
   const client = await User.findByIdAndUpdate(
@@ -528,14 +537,11 @@ router.post("/addinstance", async (req, res) => {
     }
   );
 
-
   res.json(addedProfile);
 });
 
 router.post("/ops", async (req, res) => {
-
   console.log(req.body);
-
 });
 
 router.post("/resetpassword", async (req, res) => {

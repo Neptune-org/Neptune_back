@@ -87,14 +87,14 @@ router.post("/searchbyid", async (req, res) => {
 // Get Profile by ID
 router.get("/:id", async (req, res) => {
   try {
-    const profile = await Profile.findById(req.params.id).populate(
-      {
+    const profile = await Profile.findById(req.params.id)
+      .populate({
         path: "friends",
         populate: {
           path: "prof",
         },
-      },
-    ).populate("graveyard");
+      })
+      .populate("graveyard");
     const profileSortedTimeline = profile.timeline.sort((a, b) => {
       return new Date(b.date) - new Date(a.date);
     });
@@ -595,7 +595,7 @@ router.post("/removeinv", async (req, res) => {
 
 router.post("/notifsin", async (req, res) => {
   try {
-    counting = await User.aggregate([
+    const counting = await User.aggregate([
       {
         $match: {
           _id: mongoose.Types.ObjectId(req.body.id),
@@ -632,13 +632,69 @@ router.post("/notifsin", async (req, res) => {
         },
       },
       {
+        $unwind: {
+          path: "$profs.comments",
+        },
+      },
+      {
+        $count: "prof",
+      },
+      {
+        $count: "comments",
+      },
+    ]);
+    const comments = await User.aggregate([
+      {
+        $match: {
+          _id: mongoose.Types.ObjectId(req.body.id),
+        },
+      },
+      {
+        $unwind: {
+          path: "$profiles",
+        },
+      },
+      {
+        $lookup: {
+          from: "profiles",
+          localField: "profiles",
+          foreignField: "_id",
+          as: "prof",
+        },
+      },
+      {
+        $set: {
+          profs: {
+            $arrayElemAt: ["$prof", 0],
+          },
+        },
+      },
+      {
+        $project: {
+          profs: 1,
+        },
+      },
+      {
+        $unwind: {
+          path: "$profs.comments",
+        },
+      },
+
+      {
+        $match: { "profs.comments.state": 0 },
+      },
+      {
         $count: "prof",
       },
     ]);
-    if (counting[0]?.prof > 0) {
-      res.json(counting[0]?.prof);
+    if (counting[0]?.prof && comments[0]?.prof) {
+      res.json({ inv: counting[0]?.prof, comments: comments[0]?.prof });
+    } else if (counting[0]?.prof && !comments[0]?.prof) {
+      res.json({ inv: counting[0]?.prof, comments: 0 });
+    } else if (!counting[0]?.prof && comments[0]?.prof) {
+      res.json({ inv: 0, comments: comments[0]?.prof });
     } else {
-      res.json(0);
+      res.json({ inv: 0, comments: 0 });
     }
   } catch (err) {
     console.log(err);
@@ -680,14 +736,10 @@ router.post(
   async (req, res) => {
     try {
       const allfiles = req.files?.files?.map((file) => file?.filename);
-      console.log(allfiles);
-
       const album = {
         name: req.body.name,
         images: allfiles,
       };
-      console.log(album);
-
       //add photo to album
       const profile = await Profile.findOneAndUpdate(
         { _id: req.params.id },
@@ -706,14 +758,58 @@ router.post(
   }
 );
 
-router.post("/addcomment/:id", async (req, res) => {
+router.post(
+  "/addcomment/:id",
+  upload.fields([
+    {
+      name: "files",
+      maxCount: 3,
+    },
+  ]),
+  async (req, res) => {
+    try {
+      let body = req.body;
+      const allfiles = req.files?.files?.map((file) => file?.filename);
+      body.images = allfiles;
+      const profile = await Profile.findByIdAndUpdate(
+        req.params.id,
+        { $push: { comments: body } },
+        { new: true }
+      );
+      res.json(profile);
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "internal server err" });
+    }
+  }
+);
+//change profile comment status
+router.post("/changecomstatus/:id", async (req, res) => {
   try {
-    const profile = await Profile.findByIdAndUpdate(
-      req.params.id,
-      { $push: { comments: req.body } },
-      { new: true }
-    );
-    res.json(profile);
+    if (req.body.action === "accept") {
+      const profile = await Profile.findOneAndUpdate(
+        { _id: req.params.id, "comments._id": req.body.id },
+        {
+          $set: {
+            "comments.$.state": 1,
+          },
+        },
+        { new: true }
+      );
+      return res.status(200).json(profile);
+    } else if (req.body.action === "refuse") {
+      //delete comment from profile
+      const profile = await Profile.findOneAndUpdate(
+        { _id: req.params.id },
+        {
+          $pull: {
+            comments: { _id: req.body.id },
+          },
+        },
+        { new: true }
+      );
+      return res.status(200).json(profile);
+    }
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "internal server err" });
