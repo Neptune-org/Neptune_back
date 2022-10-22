@@ -11,6 +11,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const mongoose = require("mongoose");
+const {sendMail} = require("../utils/mail");
 
 // Get all users
 
@@ -316,7 +317,6 @@ router.post("/addadmin", upload.single("userimage"), async (req, res) => {
   const hashedpassword = await bcrypt.hash(rand, 10);
   const myuser = req.body;
   myuser.password = hashedpassword;
-
   const mygraveyard = {
     name: req.body.gname,
     Lng: req.body.logitude,
@@ -350,35 +350,38 @@ router.post("/addadmin", upload.single("userimage"), async (req, res) => {
           new: true,
         }
       );
+      sendMail(k._id,req.body.name,req.body.email)
     });
   });
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL,
-      pass: process.env.PASS,
-    },
-  });
-  const template = fs.readFileSync(
-    path.resolve("./api/views", "sendmail.html"),
-    {
-      encoding: "utf-8",
-    }
-  );
-  const html = ejs.render(template, {
-    name: req.body.name,
-    lastname: req.body.lastn,
-    password: rand,
-    email: req.body.email,
-    grave: req.body.gname,
-  });
+  // const transporter = nodemailer.createTransport({
+  //   service: "gmail",
+  //   auth: {
+  //     user: process.env.EMAIL,
+  //     pass: process.env.PASS,
+  //   },
+  // });
+  // const template = fs.readFileSync(
+  //   path.resolve("./api/views", "sendmail.html"),
+  //   {
+  //     encoding: "utf-8",
+  //   }
+  // );
+  // const html = ejs.render(template, {
+  //   name: req.body.name,
+  //   lastname: req.body.lastn,
+  //   password: rand,
+  //   email: req.body.email,
+  //   grave: req.body.gname,
+  // });
 
-  let info = await transporter.sendMail({
-    from: process.env.EMAIL,
-    to: req.body.email,
-    subject: "Skiesbook",
-    html: html,
-  });
+  // let info = await transporter.sendMail({
+  //   from: process.env.EMAIL,
+  //   to: req.body.email,
+  //   subject: "Skiesbook",
+  //   html: html,
+  // });
+
+  
   res.json(registreduser);
 });
 router.put("/:id", upload.single("userimage"), async (req, res) => {

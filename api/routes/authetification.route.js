@@ -50,6 +50,7 @@ router.post("/login", async (req, res, err) => {
         role: myuser.role,
         graveyardName: myuser?.graveyard?.name,
         graveyardId: myuser?.graveyard?._id,
+        active: myuser?.active,
       };
     else
       tokendata = {
@@ -61,6 +62,7 @@ router.post("/login", async (req, res, err) => {
         role: myuser.role,
         graveyardName: myuser?.graveyard?.name,
         graveyardId: myuser?.graveyard?._id,
+        active: myuser?.active,
       };
     const createdToken = jwt.sign(tokendata, process.env.SECRET, {
       expiresIn: "6h",
@@ -75,7 +77,7 @@ router.post("/login", async (req, res, err) => {
       idToken: createdToken,
       registered: true,
       expiresIn: "255000",
-      expireDate: "2022-12-18T14:48:03.833Z",
+      expireDate: "2040-12-18T14:48:03.833Z",
     };
     // 2. send response
 

@@ -15,6 +15,7 @@ const User = new Schema(
     role: String,
     address: String,
     postalcode: String,
+    active : {type : Number, default : -1},
     vendor : { type: Schema.Types.ObjectId, ref: "User" },
     graveyard: { type: Schema.Types.ObjectId, ref: "Graveyard" },
     profiles: [{ type: Schema.Types.ObjectId, ref: "Profile" }],
