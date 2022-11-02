@@ -639,9 +639,6 @@ router.post("/notifsin", async (req, res) => {
       {
         $count: "prof",
       },
-      {
-        $count: "comments",
-      },
     ]);
     const comments = await User.aggregate([
       {

@@ -33,7 +33,7 @@ router.post("/mail-text/:mail", async (req, res) => {
 
 router.post("/test", async (req, res) => {
   SibApiV3Sdk.ApiClient.instance.authentications["api-key"].apiKey =
-    "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";
+    process.env.SENDINBLUE_API_KEY;
   const template = fs.readFileSync(
     path.resolve("./api/views", "testmail.html"),
     {

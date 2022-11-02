@@ -454,6 +454,8 @@ router.post("/addclient", upload.single("userimage"), async (req, res) => {
     profiles: wow,
     vendor: req.body.vendor,
   });
+    sendMail(registreduser._id,registreduser.name,registreduser.email)
+
   const addingprof = await User.findByIdAndUpdate(
     req.body.vendor,
     { $push: { profiles: wow } },
