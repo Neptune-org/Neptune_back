@@ -47,6 +47,7 @@ const Profile = new Schema(
     files: [String],
     active: { type: Number, default: 0 },
     graveyard: { type: Schema.Types.ObjectId, ref: "Graveyard" },
+    position : {lat : String, lng : String},
   },
 
   { timestamps: true, versionKey: false }

@@ -13,6 +13,7 @@ const User = new Schema(
     phone: String,
     sex: String,
     role: String,
+    plan: String,
     address: String,
     postalcode: String,
     active : {type : Number, default : -1},

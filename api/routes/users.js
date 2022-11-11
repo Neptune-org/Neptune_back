@@ -317,18 +317,21 @@ router.post("/addadmin", upload.single("userimage"), async (req, res) => {
   const hashedpassword = await bcrypt.hash(rand, 10);
   const myuser = req.body;
   myuser.password = hashedpassword;
+  let plan = "";
+  if (req.file) {
+    plan = req?.file.filename;
+  }
   const mygraveyard = {
     name: req.body.gname,
-    Lng: req.body.logitude,
+    Lng: req.body.Lng,
     funeral_home: req.body.funeral_home,
     address: req.body.address,
-    Lat: req.body.latitude,
+    Lat: req.body.Lat,
+    plan: plan,
   };
   const registreduser = await Graveyard.create(mygraveyard).then((d) => {
     let myfile = "avatar.jpg";
-    if (req.file) {
-      myfile = req?.file.filename;
-    }
+    
     User.create({
       name: req.body.name,
       lastn: req.body.lastn,
