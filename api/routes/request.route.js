@@ -93,4 +93,16 @@ router.post("/accept/:id", async (req, res) => {
   }
 });
 
+router.post("/reject/:id", async (req, res) => {
+  try {
+    const request = await Request.findByIdAndUpdate(req.params.id, {
+      state: "declined",
+    });
+    res.json(request);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+
 module.exports = router;

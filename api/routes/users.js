@@ -11,7 +11,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const mongoose = require("mongoose");
-const {sendMail} = require("../utils/mail");
+const { sendMail, staffMail } = require("../utils/mail");
 
 // Get all users
 
@@ -226,6 +226,8 @@ router.post("/upload-file", upload.single("image"), async (req, res) => {
 });
 
 router.put("/editadmin/:id", upload.single("userimage"), async (req, res) => {
+  if (req.file?.filename) req.body.userimage = req.file.filename;
+
   const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
   });
@@ -331,7 +333,7 @@ router.post("/addadmin", upload.single("userimage"), async (req, res) => {
   };
   const registreduser = await Graveyard.create(mygraveyard).then((d) => {
     let myfile = "avatar.jpg";
-    
+
     User.create({
       name: req.body.name,
       lastn: req.body.lastn,
@@ -353,7 +355,7 @@ router.post("/addadmin", upload.single("userimage"), async (req, res) => {
           new: true,
         }
       );
-      sendMail(k._id,req.body.name,req.body.email)
+      sendMail(k._id, req.body.name, req.body.email);
     });
   });
   // const transporter = nodemailer.createTransport({
@@ -384,7 +386,6 @@ router.post("/addadmin", upload.single("userimage"), async (req, res) => {
   //   html: html,
   // });
 
-  
   res.json(registreduser);
 });
 router.put("/:id", upload.single("userimage"), async (req, res) => {
@@ -457,7 +458,7 @@ router.post("/addclient", upload.single("userimage"), async (req, res) => {
     profiles: wow,
     vendor: req.body.vendor,
   });
-    sendMail(registreduser._id,registreduser.name,registreduser.email)
+  sendMail(registreduser._id, registreduser.name, registreduser.email);
 
   const addingprof = await User.findByIdAndUpdate(
     req.body.vendor,
@@ -487,34 +488,6 @@ router.post("/addclient", upload.single("userimage"), async (req, res) => {
       new: true,
     }
   );
-
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL,
-      pass: process.env.PASS,
-    },
-  });
-  const template = fs.readFileSync(
-    path.resolve("./api/views", "sendmail.html"),
-    {
-      encoding: "utf-8",
-    }
-  );
-  const html = ejs.render(template, {
-    name: req.body.name,
-    lastname: req.body.lastn,
-    password: rand,
-    email: req.body.email,
-    grave: req.body.gname,
-  });
-
-  let info = await transporter.sendMail({
-    from: process.env.EMAIL,
-    to: req.body.email,
-    subject: "Skiesbook",
-    html: html,
-  });
 
   res.json(registreduser + addProfile);
 });
@@ -636,33 +609,14 @@ router.post("/addgstaff", upload.single("userimage"), async (req, res) => {
     graveyard: req.body.grave,
     phone: req.body.phone,
   });
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL,
-      pass: process.env.PASS,
-    },
-  });
-  const template = fs.readFileSync(
-    path.resolve("./api/views", "sendgstaff.html"),
-    {
-      encoding: "utf-8",
-    }
+  staffMail(
+    registreduser.name,
+    registreduser.last,
+    pass,
+    registreduser.email,
+    req.body.gname,
+    registreduser._id
   );
-  const html = ejs.render(template, {
-    name: req.body.name,
-    lastname: req.body.lastn,
-    password: rand,
-    email: req.body.email,
-    grave: req.body.gname,
-  });
-
-  let info = await transporter.sendMail({
-    from: process.env.EMAIL,
-    to: req.body.email,
-    subject: "Skiesbook",
-    html: html,
-  });
   res.json(registreduser);
 });
 
@@ -784,5 +738,40 @@ router.post("/gravestaffreporting/:id", async (req, res) => {
     res.status(500).json({ message: "internal server err" });
   }
 });
+
+router.get("/getAdmin/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).populate("graveyard");
+    res.json(user);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+
+router.put("/editstaff/:id", upload.single("userimage"), async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (req.file) {
+      user.userimage = req?.file.filename;
+    }
+    user.name = req.body.name;
+    user.lastn = req.body.lastn;
+    user.role = req.body.role;
+    user.email = req.body.email;
+    user.phone = req.body.phone;
+    console.log(req.body.password);
+    if (req.body.password) {
+      hashedpassword = await bcrypt.hash(req.body.password, 10);
+      user.password = hashedpassword;
+    }
+    const updateduser = await user.save();
+    res.json(updateduser);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "internal server err" });
+  }
+});
+
 
 module.exports = router;

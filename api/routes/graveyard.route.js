@@ -156,22 +156,16 @@ router.post("/allusers", async (req, res) => {
 router.post("/graveyardgraph", async (req, res) => {
   //console.log(req.body);
   try {
-
     const date1 = new Date(req.body.startDate);
     const date2 = new Date(req.body.endDate);
     const allofthem = await Graveyard.find({}).populate("persons");
     const totalprofiles = allofthem.map((obj) => ({
-      _id:obj?._id,
+      _id: obj?._id,
       name: obj?.name,
       totalprofiles: obj?.persons?.length,
-      totalclients:obj?.clients?.length,
+      totalclients: obj?.clients?.length,
       newprofiles: obj?.persons?.filter(
-        (obj) =>
-          obj.createdAt >
-          date1 &&
-          obj.createdAt <
-          date2
-
+        (obj) => obj.createdAt > date1 && obj.createdAt < date2
       ).length,
     }));
     res.json(totalprofiles);
@@ -189,10 +183,11 @@ router.post("/alluserscim/:id", async (req, res) => {
     const date2 = new Date(req.body.endDate);
 
     const profiles = await Profile.find({});
-    const users = await User.find({graveyard:req.params.id});
-    const graveyards = await Graveyard.find({_id:req.params.id});
+    const users = await User.find({ graveyard: req.params.id });
+    const graveyards = await Graveyard.find({ _id: req.params.id });
     const newCreatedProfiles = await Profile.find({
-      createdAt: { $gte: date1, $lte: date2 },graveyard:req.params.id
+      createdAt: { $gte: date1, $lte: date2 },
+      graveyard: req.params.id,
     });
     const response = {
       profiles: profiles.length,
@@ -209,22 +204,18 @@ router.post("/alluserscim/:id", async (req, res) => {
 router.post("/graveyardgraphcim/:findById", async (req, res) => {
   //console.log(req.body);
   try {
-
     const date1 = new Date(req.body.startDate);
     const date2 = new Date(req.body.endDate);
-    const allofthem = await Graveyard.find({_id:req.params.id}).populate("persons");
+    const allofthem = await Graveyard.find({ _id: req.params.id }).populate(
+      "persons"
+    );
     const totalprofiles = allofthem.map((obj) => ({
-      _id:obj?._id,
+      _id: obj?._id,
       name: obj?.name,
       totalprofiles: obj?.persons?.length,
-      totalclients:obj?.clients?.length,
+      totalclients: obj?.clients?.length,
       newprofiles: obj?.persons?.filter(
-        (obj) =>
-          obj.createdAt >
-          date1 &&
-          obj.createdAt <
-          date2
-
+        (obj) => obj.createdAt > date1 && obj.createdAt < date2
       ).length,
     }));
     res.json(totalprofiles);
@@ -232,5 +223,43 @@ router.post("/graveyardgraphcim/:findById", async (req, res) => {
     res.json(error);
   }
 });
+
+router.post("/addposition/:id", async (req, res) => {
+  const updatedGraveyard = await Graveyard.findByIdAndUpdate(
+    req.params.id,
+    {
+      $push: {
+        places: req.body,
+      },
+    },
+    { new: true }
+  );
+  res.json(updatedGraveyard);
+});
+
+router.get("/positions/:id",async(req,res)=>{
+  const graveyard = await Graveyard.findById(req.params.id)
+  const places = graveyard.places
+  const graveyardProfiles = await Profile.find({graveyard:req.params.id})
+  // extract profiles which same position id
+  let profiles = []
+  graveyardProfiles.forEach(profile => {
+    places.forEach(place => {
+      if(profile.position.id == place._id){
+        profiles.push(
+          {
+            _id:profile._id,
+            name:profile.profileName,
+            lastn:profile.profileLastName,
+            died:profile.profileDatedeath,
+            code:place.code,
+          }
+        )
+      }
+    })
+  })
+  res.json(profiles)
+  
+})
 
 module.exports = router;
