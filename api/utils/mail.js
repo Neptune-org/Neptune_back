@@ -117,9 +117,51 @@ async function staffMail(name, lastn, rand, email, gname,id) {
       }
     );
 }
-
+async function staffAdminMail(name, lastn, rand, email, gname,id,role) {
+  SibApiV3Sdk.ApiClient.instance.authentications["api-key"].apiKey =
+    process.env.SENDINBLUE_API_KEY;
+  const template = fs.readFileSync(
+    path.resolve("./api/views", "sendastaff.html"),
+    {
+      encoding: "utf-8",
+    }
+  );
+  // date tomorrow timestamp
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowTimestamp = tomorrow.getTime() / 1000;
+  const link = `http://www.skiesbook.com/welcome/${id}/${tomorrowTimestamp}`
+  const html = ejs.render(template, {
+    name: name,
+    lastname: lastn,
+    password: rand,
+    email: email,
+    role: role,
+    link: link
+  });
+  new SibApiV3Sdk.TransactionalEmailsApi()
+    .sendTransacEmail({
+      subject: "Welcome to skiesbook",
+      sender: { email: "no-reply@skiesbook.com", name: "skiesbook" },
+      replyTo: { email: "no-reply@skiesbook.com", name: "skiesbook" },
+      to: [{ name: name, email: email }],
+      htmlContent: html,
+      params: { bodyMessage: "Welcome to skiesbook" + name },
+    })
+    .then(
+      function (data) {
+        console.log(data);
+        return data;
+      },
+      function (error) {
+        console.log(error);
+        return error;
+      }
+    );
+}
 module.exports = {
   sendMail,
   b2bMail,
+  staffAdminMail,
   staffMail,
 };

@@ -9,7 +9,8 @@ const Ticket = new Schema(
     messages: [{ msg: String, send: Number,timestamp: { type: Date, default: Date.now }, sender: { type: Schema.Types.ObjectId, ref: "User" } }],
     status: {type : String, default: "open"},
     files : String,
-    history : [{msg: String,timestamp: { type: Date, default: Date.now } }]
+    history : [{msg: String,timestamp: { type: Date, default: Date.now } }],
+    code : String,
     
   },
 

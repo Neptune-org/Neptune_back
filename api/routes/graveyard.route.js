@@ -132,9 +132,9 @@ router.post("/allusers", async (req, res) => {
   try {
     const d = new Date();
     let month = d.getMonth();
-    const date1 = new Date(req.body.startDate);
-    const date2 = new Date(req.body.endDate);
-
+    let date1 = new Date(req.body.startDate);
+    let date2 = new Date(req.body.endDate);
+    date2.setDate(date2.getDate() + 1);
     const profiles = await Profile.find({});
     const users = await User.find({});
     const graveyards = await Graveyard.find({});
@@ -156,8 +156,10 @@ router.post("/allusers", async (req, res) => {
 router.post("/graveyardgraph", async (req, res) => {
   //console.log(req.body);
   try {
-    const date1 = new Date(req.body.startDate);
-    const date2 = new Date(req.body.endDate);
+    let date1 = new Date(req.body.startDate);
+    let date2 = new Date(req.body.endDate);
+    date2.setDate(date2.getDate() + 1);
+
     const allofthem = await Graveyard.find({}).populate("persons");
     const totalprofiles = allofthem.map((obj) => ({
       _id: obj?._id,
@@ -179,8 +181,9 @@ router.post("/alluserscim/:id", async (req, res) => {
   try {
     const d = new Date();
     let month = d.getMonth();
-    const date1 = new Date(req.body.startDate);
-    const date2 = new Date(req.body.endDate);
+    let date1 = new Date(req.body.startDate);
+    let date2 = new Date(req.body.endDate);
+    date2.setDate(date2.getDate() + 1);
 
     const profiles = await Profile.find({});
     const users = await User.find({ graveyard: req.params.id });
@@ -225,6 +228,15 @@ router.post("/graveyardgraphcim/:findById", async (req, res) => {
 });
 
 router.post("/addposition/:id", async (req, res) => {
+  const positions = await Graveyard.findById(req.params.id);
+
+  const positionCheck = positions.places.find(
+    (place) => place.code === req.body.code
+  );
+  console.log(positionCheck)
+  if (positionCheck) {
+    return res.status(401).json({ message: "POSITION_EXISTS" });
+  }
   const updatedGraveyard = await Graveyard.findByIdAndUpdate(
     req.params.id,
     {
@@ -237,29 +249,65 @@ router.post("/addposition/:id", async (req, res) => {
   res.json(updatedGraveyard);
 });
 
-router.get("/positions/:id",async(req,res)=>{
-  const graveyard = await Graveyard.findById(req.params.id)
-  const places = graveyard.places
-  const graveyardProfiles = await Profile.find({graveyard:req.params.id})
+router.get("/positions/:id", async (req, res) => {
+  const user = await User.findById(req.params.id).populate("graveyard");
+  if (!user) return res.status(404).json({ message: "User not found" });
+  const graveyard = user.graveyard;
+  const places = graveyard.places;
+  const graveyardProfiles = await Profile.find({
+    graveyard: user.graveyard._id,
+  });
   // extract profiles which same position id
-  let profiles = []
-  graveyardProfiles.forEach(profile => {
-    places.forEach(place => {
-      if(profile.position.id == place._id){
-        profiles.push(
-          {
-            _id:profile._id,
-            name:profile.profileName,
-            lastn:profile.profileLastName,
-            died:profile.profileDatedeath,
-            code:place.code,
-          }
-        )
+
+  const newPlaces = places.map((place) => {
+    let newPlace = {
+      code: place.code,
+      lat: place.lat,
+      lng: place.lng,
+      profiles: [],
+    };
+    return newPlace;
+  });
+
+  graveyardProfiles.forEach((profile) => {
+    newPlaces.forEach((place) => {
+      if (profile.position.code == place.code) {
+        place?.profiles.push({
+          _id: profile._id,
+          name: profile.profileName,
+          lastn: profile.profileLastName,
+          birth: profile.profileDatebirth,
+          died: profile.profileDatedeath,
+          banner: profile?.banner,
+          email: profile?.profileEmail,
+          image: profile?.profileImage,
+          createdAt: profile.createdAt,
+        });
       }
-    })
-  })
-  res.json(profiles)
-  
-})
+    });
+  });
+  res.json(newPlaces);
+});
+
+// upload plan file image
+router.post("/uploadplan", upload.single("plan"), async (req, res) => {
+  const fileName = req.file.filename;
+
+  const admin = await User.findById(req.body.id).populate("graveyard");
+  const updatedGraveyard = await Graveyard.findByIdAndUpdate(
+    admin?.graveyard?._id,
+    {
+      plan: fileName,
+    },
+    { new: true }
+  );
+  res.json(updatedGraveyard);
+});
+
+// get graveyard emplacements
+router.get("/getemplacements/:id", async (req, res) => {
+  const user = await User.findById(req.params.id).populate("graveyard");
+  res.json(user?.graveyard?.places);
+});
 
 module.exports = router;

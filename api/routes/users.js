@@ -11,7 +11,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const mongoose = require("mongoose");
-const { sendMail, staffMail } = require("../utils/mail");
+const { sendMail, staffMail,staffAdminMail } = require("../utils/mail");
 
 // Get all users
 
@@ -130,8 +130,10 @@ router.get("/getprofiles/:id", async (req, res) => {
 //get filtred profiles
 router.post("/getfiltredprofiles/:id", async (req, res) => {
   try {
-    const date1 = new Date(req.body.startDate);
-    const date2 = new Date(req.body.endDate);
+    let date1 = new Date(req.body.startDate);
+    let date2 = new Date(req.body.endDate);
+    // add one day to date2
+    date2.setDate(date2.getDate() + 1);
     const allProfiles = await Profile.find({
       graveyard: req.params.id,
       createdAt: { $gte: date1, $lte: date2 },
@@ -493,8 +495,9 @@ router.post("/addclient", upload.single("userimage"), async (req, res) => {
 });
 
 router.post("/addinstance", async (req, res) => {
+  const getClient = await User.findById(req.body.client);
+  req.body.graveyard = getClient.graveyard;
   const addedProfile = await Profile.create(req.body);
-
   const client = await User.findByIdAndUpdate(
     req.body.client,
     { $push: { profiles: addedProfile._id } },
@@ -502,7 +505,6 @@ router.post("/addinstance", async (req, res) => {
       new: true,
     }
   );
-
   const addingprof = await User.findByIdAndUpdate(
     req.body.vendor,
     { $push: { profiles: addedProfile._id } },
@@ -527,7 +529,6 @@ router.post("/ops", async (req, res) => {
 
 router.post("/resetpassword", async (req, res) => {
   try {
-    console.log(req.body);
     const usercheck = await User.findOne({ email: req.body.email });
 
     if (usercheck) {
@@ -627,7 +628,6 @@ router.post("/addastaff", upload.single("userimage"), async (req, res) => {
   }
   //console.log(req.body);
   let rand = (Math.random() + 1).toString(36).substring(4);
-
   const hashedpassword = await bcrypt.hash(rand, 7);
   const myuser = req.body;
   myuser.password = hashedpassword;
@@ -646,33 +646,15 @@ router.post("/addastaff", upload.single("userimage"), async (req, res) => {
     userimage: myfile,
     phone: req.body.phone,
   });
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL,
-      pass: process.env.PASS,
-    },
-  });
-  const template = fs.readFileSync(
-    path.resolve("./api/views", "sendgstaff.html"),
-    {
-      encoding: "utf-8",
-    }
+  staffAdminMail(
+    registreduser.name,
+    registreduser.last,
+    myuser.password,
+    registreduser.email,
+    "Staff",
+    registreduser._id,
+    registreduser.role
   );
-  const html = ejs.render(template, {
-    name: req.body.name,
-    lastname: req.body.lastn,
-    password: rand,
-    email: req.body.email,
-    grave: req.body.gname,
-  });
-
-  let info = await transporter.sendMail({
-    from: process.env.EMAIL,
-    to: req.body.email,
-    subject: "Skiesbook",
-    html: html,
-  });
   res.json(registreduser);
 });
 
@@ -760,9 +742,8 @@ router.put("/editstaff/:id", upload.single("userimage"), async (req, res) => {
     user.role = req.body.role;
     user.email = req.body.email;
     user.phone = req.body.phone;
-    console.log(req.body.password);
     if (req.body.password) {
-      hashedpassword = await bcrypt.hash(req.body.password, 10);
+      let hashedpassword = await bcrypt.hash(req.body.password, 10);
       user.password = hashedpassword;
     }
     const updateduser = await user.save();
@@ -772,6 +753,5 @@ router.put("/editstaff/:id", upload.single("userimage"), async (req, res) => {
     res.status(500).json({ message: "internal server err" });
   }
 });
-
 
 module.exports = router;

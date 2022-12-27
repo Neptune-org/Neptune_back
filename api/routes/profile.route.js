@@ -171,9 +171,22 @@ router.get("/getticket/:id", async (req, res) => {
 //add ticket
 router.post("/addticket/:id", async (req, res) => {
   try {
+    // generate a xxx-xxx code that increments by 1
+    const lastTicket = await Ticket.findOne().sort({ _id: -1 });
+
+    let code = "SK-0001";
+
+    if (lastTicket) {
+      const lastCode = lastTicket.code;
+      const lastCodeNumber = parseInt(lastCode.split("-")[1]);
+      // keep the same prefix and increment the number
+      code = `SK-${(lastCodeNumber + 1).toString().padStart(4, "0")}`;
+      
+    }
     let tick = {
       prop: req.params.id,
       subject: req.body.subject,
+      code: code,
       messages: { msg: req.body.message, send: 0, sender: req.params.id },
     };
     const tickets = await Ticket.create(tick);
